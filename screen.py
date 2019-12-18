@@ -1,5 +1,7 @@
 from time import sleep
 from threading import Thread
+
+from PIL import Image
 from StreamDeck.ImageHelpers import PILHelper
 from queue import Queue
 from functools import partial
@@ -12,6 +14,8 @@ class Screen:
         self.queue = Queue()
         Thread(target=self._update_loop).start()
 
+
+
     def update_image(self, index, image):
         if self.deck is None or image is None:
             return
@@ -23,7 +27,7 @@ class Screen:
         if not state:
             return
         if self.buttons[key] is not None:
-            Thread(target=self.buttons[key].on_press, args=(deck,)).start()
+            Thread(target=self.buttons[key].on_press).start()
 
     def attach(self, deck):
         self.deck = deck
@@ -32,6 +36,9 @@ class Screen:
             if button is not None:
                 self.update_image(index, button.image)
                 button.on_image_change = partial(self.update_image, index)
+            else:
+                self.update_image(index, Image.new("RGB", (72, 72), "black"))
+
 
     def detach(self):
         self.deck = None

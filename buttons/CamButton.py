@@ -15,7 +15,7 @@ class CamButton(ButtonBase):
         Thread(target=self._update_loop).start()
         self.image = self.render_text(str(self.index + 1), "black", 20)
 
-    def on_press(self, deck):
+    def on_press(self):
         if self.data["on"]:
             return
         for i in store["cams"]:

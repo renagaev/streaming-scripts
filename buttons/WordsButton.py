@@ -15,7 +15,7 @@ class WordsButton(ButtonBase):
             return self.render_icon("align-left", "green")
         return self.render_icon("align-left")
 
-    def on_press(self, deck):
+    def on_press(self):
         self.on = not self.on
         if self.on:
             self.vmix.enable_input(2)

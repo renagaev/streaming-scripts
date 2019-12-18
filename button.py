@@ -21,7 +21,7 @@ class ButtonBase(ABC):
         self._image = value
 
     @abstractmethod
-    def on_press(self, deck):
+    def on_press(self):
         pass
 
     def _create_image(self, color="black"):

@@ -12,7 +12,7 @@ class BlinkButton(ButtonBase):
         self._off_img = self.render_text(str(self.index+1), "black", 20)
         self.image = self._off_img
 
-    def on_press(self, deck):
+    def on_press(self):
         if self.on:
             self.on = False
         else:

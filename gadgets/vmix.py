@@ -20,69 +20,52 @@ class Vmix:
     def enable_input(self, inp=None):
         if inp is None:
             inp = self.mac
-        params = {
-            "function": f"overlayinput{inp}in",
-            "input": str(inp)
-        }
-        requests.get(self.url, params)
+        self._call(f"overlayinput{inp}in", input=inp)
 
     def disable_input(self, inp=None):
         if inp is None:
             inp = self.mac
-        params = {
-            "function": f"overlayinput{inp}out",
-            "input": str(inp)
-        }
-        requests.get(self.url, params)
+        self._call(f"overlayinput{inp}out", input=str(inp))
 
     def set_title_text(self, inp, text):
-        params = {
-            "function": "settext",
-            "input": str(inp),
-            "value": text
-        }
-        requests.get(self.url, params)
+        self._call("settext", text, str(inp))
 
     def set_zoom(self, inp, value):
-        params = {
-            "function": "setzoom",
-            "input": inp,
-            "value": value
-        }
-        requests.get(self.url, params)
+        self._call("setzoom", value=value, input=inp)
 
     def stop_zoom(self):
         run_zoom_in = False
         run_zoom_out = False
 
     def start_stream(self):
-        params = {
-            "function": "startstreaming"
-        }
-        requests.get(self.url, params)
+        self._call("startstreaming")
 
     def start_recording(self):
-        params = {
-            "function": "startrecording"
-        }
-        requests.get(self.url, params)
+        self._call("startrecording")
 
     def load_preset(self):
-        params = {
-            "function": "openpreset",
-            "value": "C:\\Users\Admin\Documents\\vMixStorage\church.vmix"
-        }
-        requests.get(self.url, params)
+        self._call("openpreset", "C:\\Users\Admin\Documents\\vMixStorage\church.vmix")
+
     def start_multicorder(self):
-        params = {
-            "function": "startmulticorder"
-        }
-        requests.get(self.url, params)
+        self._call("startmulticorder")
 
     def stop_multicorder(self):
+        self._call("stopmulticorder")
+
+    def add_video_input(self, path):
+        self._call("addinput", path)
+
+    def play_input(self, input):
+        pass
+
+    def _call(self, function, value=None, input=None):
         params = {
-            "function": "stopmulticorder"
+            "function": function
         }
+        if value is not None:
+            params["value"] = value
+        if input is not None:
+            params["input"] = input
         requests.get(self.url, params)
 
     def set_stream_key(self, key):
@@ -111,8 +94,10 @@ class Vmix:
         insight.move_window(x=1470, y=0)
         self.main_window.move_window(width=1488, repaint=True)
 
+
 if __name__ == '__main__':
     import time
+
     v = Vmix()
     v.start_multicorder()
     time.sleep(10)

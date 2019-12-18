@@ -16,7 +16,7 @@ class SoundModeButton(ButtonBase):
         else:
             return self.render_icon("volume-up")
 
-    def on_press(self, deck):
+    def on_press(self):
         if self.mode == "mic":
             self.mode = "in"
         else:

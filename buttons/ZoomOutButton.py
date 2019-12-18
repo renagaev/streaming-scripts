@@ -20,7 +20,7 @@ class ZoomOutButton(ButtonBase):
             return self.render_icon("search-minus", "green")
         return self.render_icon("search-minus", "black")
 
-    def on_press(self, deck):
+    def on_press(self):
         if self.data["out"]:
             self.data["out"] = False
         else:

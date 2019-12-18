@@ -15,7 +15,7 @@ class RolandModeButton(ButtonBase):
         else:
             return self.render_icon("turtle")
 
-    def on_press(self, deck):
+    def on_press(self):
         if self.mode == "mic":
             self.mode = "cut"
         else:

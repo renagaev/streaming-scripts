@@ -19,7 +19,7 @@ class ZoomInButton(ButtonBase):
             return self.render_icon("search-plus", "green")
         return self.render_icon("search-plus", "black")
 
-    def on_press(self, deck):
+    def on_press(self):
         if self.data["in"]:
             self.data["in"] = False
         else:
