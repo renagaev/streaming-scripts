@@ -15,7 +15,6 @@ class Vmix:
         self.mac = 2
         self.app = Application().connect(path=path)
         self.main_window = self.app.window(title_re=".*Pro.*")
-        x = 0
 
     def enable_input(self, inp=None):
         if inp is None:
@@ -40,8 +39,14 @@ class Vmix:
     def start_stream(self):
         self._call("startstreaming")
 
+    def stop_stream(self):
+        self._call("stopstreamih")
+
     def start_recording(self):
         self._call("startrecording")
+
+    def stop_recording(self):
+        self._call("stoprecording")
 
     def load_preset(self):
         self._call("openpreset", "C:\\Users\Admin\Documents\\vMixStorage\church.vmix")

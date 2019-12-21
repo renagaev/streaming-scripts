@@ -1,14 +1,15 @@
 from threading import Thread
 
-from button import ButtonBase
+from buttons.button import ButtonBase
 from store import store
 from time import time, sleep
 
 
 class CamButton(ButtonBase):
 
-    def __init__(self, roland, index):
+    def __init__(self, roland, lamps, index):
         super().__init__()
+        self.lamps = lamps
         self.index = index
         self.roland = roland
         self.data = store["cams"][self.index]
@@ -26,10 +27,14 @@ class CamButton(ButtonBase):
         self.image = self.render_text("0:00", "green", 20)
 
     def _update_loop(self):
+        on = False
         prev = 0
         while True:
             sleep(0.05)
             if self.data["on"]:
+                if not on:
+                    self.lamps.on(self.index)
+                    on = True
                 t = int(time() - self.data["start"])
                 if t == prev: continue
                 prev = t
@@ -39,5 +44,8 @@ class CamButton(ButtonBase):
                 text = f"{minutes}:{seconds}"
                 self.image = self.render_text(text, "green", 20)
             else:
+                if on:
+                    on = False
+                    self.lamps.off(self.index)
                 if self.image_changed:
                     self.image = self.render_text(str(self.index+1), "black", 20)

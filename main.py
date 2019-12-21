@@ -1,5 +1,8 @@
 from StreamDeck.DeviceManager import DeviceManager
 
+from Lamps.LampsSwitch import LampsSwitch
+from Lamps.WiredLamp import WiredLamp
+from Lamps.WirelessLamp import WirelessLamp
 from buttons.RecordingButton import RecordingButton
 from buttons.SwitchButton import SwitchButton
 from buttons.WordsButton import WordsButton
@@ -21,6 +24,12 @@ vmix = Vmix()
 arduino = Arduino(dummy=True)
 main_screen = Screen()
 second_screen = Screen()
+lamps = LampsSwitch()
+
+lamps.lamps[0] = WirelessLamp("192.168.0.112")
+lamps.lamps[1] = WiredLamp(arduino, 1)
+lamps.lamps[2] = WiredLamp(arduino, 2)
+lamps.lamps[3] = WiredLamp(arduino, 3)
 
 
 deck.open()
@@ -28,8 +37,8 @@ deck.reset()
 deck.set_brightness(100)
 
 
-cam_buttons = [CamButton(roland, i) for i in range(0, 4)]
-blink_buttons = [BlinkButton(arduino, i) for i in range(0, 4)]
+cam_buttons = [CamButton(roland, lamps, i) for i in range(0, 4)]
+blink_buttons = [BlinkButton(lamps, i) for i in range(0, 4)]
 roland_mode_button = RolandModeButton(roland)
 sound_mode_button = SoundModeButton(roland)
 words_button = WordsButton(vmix)

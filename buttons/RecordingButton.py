@@ -1,10 +1,11 @@
-from button import ButtonBase
+from buttons.button import ButtonBase
 from gadgets.ffmpeg import Ffmpeg
 from gadgets.vmix import Vmix
 from time import sleep
 from os.path import join
 from os import scandir
 from os import remove
+from store import store
 
 
 class RecordingButton(ButtonBase):
@@ -36,6 +37,8 @@ class RecordingButton(ButtonBase):
             sleep(1)
         self.vmix.stop_multicorder()
         self.recording = False
+        store["trailer"]["path"] = join(self.base_path, self.last)
+        store["trailer"]["len"] = self.recorded
 
     def make_path(self, filename):
         return join(self.base_path, filename).replace("\\", "\\\\")
