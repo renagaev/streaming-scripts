@@ -1,12 +1,13 @@
 from buttons.button import ButtonBase
-from gadgets.roland import Roland
+from gadgets.obs import Obs
 
 
 class SoundModeButton(ButtonBase):
 
-    def __init__(self, roland: Roland):
+    def __init__(self, obs: Obs):
         super().__init__()
-        self.roland = roland
+        self.obs = obs
+
         self.mode = "mic"
         self.image = self._icon()
 
@@ -18,9 +19,9 @@ class SoundModeButton(ButtonBase):
 
     def on_press(self):
         if self.mode == "mic":
-            self.mode = "in"
+            self.mode = "zoom"
         else:
             self.mode = "mic"
 
-        self.roland.change_sound_input(2, self.mode)
+        self.obs.change_sound_input(2, self.mode)
         self.image = self._icon()

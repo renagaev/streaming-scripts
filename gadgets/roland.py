@@ -44,7 +44,7 @@ class Roland:
             self.output.send(mido.Message.from_hex(hex))
 
     def set_cam(self, bus, cam):
-        control_msg = f"C0 0{cam - 1}"
+        control_msg = f"C0 0{cam}"
         if bus == a:
             self.msg("B0 00 00", "B0 20 00", control_msg)
         else:

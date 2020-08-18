@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+    <link rel="stylesheet" href="../common/css/style-001.css">
+    <title>Receiver demo</title>
+    <script>
+        var bc = new BroadcastChannel('obs-lower-thirds-channel');
+        bc.onmessage = function (ev) {
+            received_data = ev.data.split("|");
+            console.log(received_data)
+            document.getElementById("name").innerHTML = received_data[0];
+            document.getElementById("function").innerHTML = received_data[1];
+            position = received_data[2];
+            animation = received_data[3];
+            console.log('Name: ' + received_data[0] + ', Function: ' + received_data[1] + ', Position: ' + received_data[2] + ', Animation: ' + received_data[3]);
+            if (animation == 'animateIn') {
+                document.getElementById("lower-third").classList.remove("animateOut");
+                document.getElementById("lower-third").classList.add("animateIn");
+
+                setTimeout(() => {
+                    document.getElementById("lower-third").classList.remove("animateIn");
+                    document.getElementById("lower-third").classList.add("animateOut");
+                }, 8000)
+            }
+            ;
+            if (animation == 'animateOut') {
+                document.getElementById("lower-third").classList.remove("animateIn");
+                document.getElementById("lower-third").classList.add("animateOut");
+            }
+            ;
+            if (position == 'left') {
+                document.getElementById("lower-third").classList.remove("right");
+                document.getElementById("lower-third").classList.add("left");
+            }
+            ;
+            if (position == 'right') {
+                document.getElementById("lower-third").classList.remove("left");
+                document.getElementById("lower-third").classList.add("right");
+            }
+            ;
+
+        }
+    </script>
+    <style>
+    </style>
+</head>
+<body class="browser-source lower-thirds">
+<div style="height: 100%">
+    <div id="lower-third" class="back">
+        <div class="left-block" style="text-align: left">
+            <img src="../common/images/church.png" style="filter: drop-shadow(12px 7px 4px #bcbcbc);">
+        </div>
+        <div class="right-block" style="position: absolute; top: 20px; text-align: left">
+            <div id="name">sdf</div>
+            <div id="function">sdfsdf</div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

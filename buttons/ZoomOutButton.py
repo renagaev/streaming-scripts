@@ -1,4 +1,7 @@
+import requests
+
 from buttons.button import ButtonBase
+from gadgets.obs import Obs
 from gadgets.vmix import Vmix
 from store import store
 from time import sleep
@@ -7,9 +10,8 @@ from threading import Thread
 
 class ZoomOutButton(ButtonBase):
 
-    def __init__(self, vmix: Vmix):
+    def __init__(self):
         super().__init__()
-        self.vmix = vmix
         self.data = store["zoom"]
         self.image = self._icon()
 
@@ -26,7 +28,7 @@ class ZoomOutButton(ButtonBase):
         else:
             self.data["out"] = True
             self.data["in"] = False
-            Thread(target=self._timer).start()
+            Obs.send_key(0x75)
         self.image = self._icon()
 
     def _timer(self):

@@ -14,15 +14,15 @@ class Arduino:
 
     def command(self, cam, bright):
         bright = int(bright)
-        self.queue.put(f"{cam} {bright};".encode("utf-8"))
+        self.queue.put(f"{cam}{bright};".encode("utf-8"))
 
     def hard(self, cam):
         for i in range(4):
             self.command(i, 0)
-        self.command(cam, 127)
+        self.command(cam, 1)
 
     def on(self, cam):
-        self.command(cam, 127)
+        self.command(cam, 1)
 
     def off(self, cam):
         self.command(cam, 0)
@@ -35,3 +35,7 @@ class Arduino:
                 self.queue.task_done()
             sleep(0.05)
 
+if __name__ == '__main__':
+    a = Arduino()
+    import time
+    a.queue.put("31".encode("utf-8"))

@@ -9,7 +9,7 @@ class WiredLamp(Lamp):
         self.arduino = arduino
 
     def on(self):
-        self.arduino.on(self.index+1)
+        self.arduino.on(self.index+3)
 
     def off(self):
-        self.arduino.off(self.index+1)
+        self.arduino.off(self.index+3)

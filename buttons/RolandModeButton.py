@@ -6,7 +6,7 @@ class RolandModeButton(ButtonBase):
     def __init__(self, roland):
         super().__init__()
         self.roland = roland
-        self.mode = "mic"
+        self.mode = "mix"
         self.image = self._icon()
 
     def _icon(self):
@@ -16,9 +16,9 @@ class RolandModeButton(ButtonBase):
             return self.render_icon("turtle")
 
     def on_press(self):
-        if self.mode == "mic":
+        if self.mode == "mix":
             self.mode = "cut"
         else:
-            self.mode = "mic"
+            self.mode = "mix"
         self.roland.mode = self.mode
         self.image = self._icon()
