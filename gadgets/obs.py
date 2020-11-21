@@ -18,7 +18,7 @@ class Obs:
 
     @staticmethod
     def send_key(key):
-        name = "OBS 25.0.8 (64-bit, windows) - Profile: Безымянный - Scenes: Безымянный"
+        name = "OBS 26.0.2 (64-bit, windows) - Profile: Безымянный - Scenes: Безымянный"
         hwndMain = win32gui.FindWindow(None, name)
         hwndChild = win32gui.GetWindow(hwndMain, win32con.GW_CHILD)
         win32api.PostMessage(hwndChild, win32con.WM_CHAR, key, 0)

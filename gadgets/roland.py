@@ -35,13 +35,15 @@ class Roland:
         self.set_cam(b, 1)
         self.transform_to_bus(b)
         self.transform_to_bus(a)
+        self.set_mode_to_mix()
         #self.change_sound_input(1, self.noaudio)
 
 
     def msg(self, *hexs):
         if self.dummy: return
         for hex in hexs:
-            self.output.send(mido.Message.from_hex(hex))
+            msg = mido.Message.from_hex(hex)
+            self.output.send(msg)
 
     def set_cam(self, bus, cam):
         control_msg = f"C0 0{cam}"
@@ -65,9 +67,12 @@ class Roland:
             bus = b if self.active_bus == self.b else a
             self.set_cam(bus, cam)
 
+    def set_mode_to_mix(self):
+        self.msg("B0 13 01")
 
 
     def recieve(self, msg):
+        print(msg.hex())
         if msg.type == "program_change":
             self.selected_bus.cam = msg.program
             if self.selected_bus == self.active_bus:
@@ -85,11 +90,11 @@ class Roland:
             else:
                 self.last_br = br
 
-            if msg.value == 0:
+            if msg.value <= 5:
                 self.active_bus = self.a
                 self.on_cam_change(self.a.cam)
 
-            elif msg.value == 127:
+            elif msg.value >= 125:
                 self.active_bus = self.b
                 self.on_cam_change(self.b.cam)
 
@@ -102,6 +107,7 @@ class Roland:
                     if i > 127:
                         i = 127
         elif msg.type == "control_change" and msg.control == 0:
+            print(f"test {msg.value}")
             self.selected_bus = self.b if msg.value else self.a
 
     @staticmethod

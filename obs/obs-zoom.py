@@ -51,7 +51,7 @@ def blur(spaces):
 
 
 def fade(spaces):
-    cams = obs.obs_get_source_by_name("Image")
+    cams = obs.obs_get_source_by_name("cams.zoom")
     blur_filter = obs.obs_source_get_filter_by_name(cams, "blur")
 
     source = obs.obs_get_source_by_name("projector")
@@ -63,11 +63,11 @@ def fade(spaces):
         obs.obs_data_release(field_filter_settings)
 
         blur_filter_settings = obs.obs_data_create()
-        obs.obs_data_set_int(blur_filter_settings, "Filter.Blur.Size", int(i))
+        obs.obs_data_set_int(blur_filter_settings, "Filter.Blur.Size", int(i*0.75))
         obs.obs_source_update(blur_filter, blur_filter_settings)
         obs.obs_data_release(blur_filter_settings)
 
-        sleep(0.015)
+        sleep(0.015*2)
     obs.obs_source_release(field_filter)
     obs.obs_source_release(source)
 

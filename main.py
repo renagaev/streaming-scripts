@@ -2,6 +2,8 @@ from StreamDeck.DeviceManager import DeviceManager
 
 from Lamps.LampsSwitch import LampsSwitch
 from Lamps.WiredLamp import WiredLamp
+from Lamps.WirelessLamp import WirelessLamp
+from buttons.Init.ObsButton import ObsButton
 from buttons.SwitchButton import SwitchButton
 from buttons.WordsButton import WordsButton
 from buttons.ZoomInButton import ZoomInButton
@@ -17,7 +19,10 @@ from gadgets.roland import Roland
 from time import sleep
 
 deck = DeviceManager().enumerate()[0]
-roland = Roland("V-1HD 0", "V-1HD 1", dummy=False)
+
+
+
+roland = Roland("V-1HD 0", 'V-1HD 1', dummy=False)
 obs = Obs()
 arduino = Arduino(dummy=False)
 main_screen = Screen()
@@ -25,8 +30,8 @@ second_screen = Screen()
 lamps = LampsSwitch()
 
 lamps.lamps[0] = WiredLamp(arduino, 0)
-lamps.lamps[1] = WiredLamp(arduino, 1)
-lamps.lamps[2] = WiredLamp(arduino, 2)
+lamps.lamps[1] = WirelessLamp("192.168.0.103")
+lamps.lamps[2] = WirelessLamp("192.168.0.102")
 lamps.lamps[3] = WiredLamp(arduino, 3)
 
 
@@ -34,7 +39,7 @@ deck.open()
 deck.reset()
 deck.set_brightness(100)
 
-
+       
 cam_buttons = [CamButton(roland, lamps, i) for i in range(0, 4)]
 blink_buttons = [BlinkButton(lamps, i) for i in range(0, 4)]
 roland_mode_button = RolandModeButton(roland)

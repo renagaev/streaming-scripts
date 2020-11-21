@@ -44,7 +44,7 @@ body.browser-source.clock {
 
 .panel input#lower-thirds-name, .panel input#lower-thirds-function {
     box-sizing: border-box;
-    padding: .75em;
+    padding: .55em;
     margin: 0 0 1em;
     border: none;
     display: block;
@@ -56,15 +56,12 @@ body.browser-source.clock {
     border: 1px solid var(--obs-button-border);
     color: var(--obs-button-color);
     padding: .75em;
-    margin: 0 0 1em;
     text-align: center;
     width: 100%;
 }
 
 .panel button.onethird {
-    width: 30%;
-    float: left;
-    margin-right: 2%
+    flex: 50%;
 }
 
 .panel button:hover {

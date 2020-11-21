@@ -10,19 +10,27 @@ class WirelessLamp(Lamp):
     def __init__(self, ip):
         self.nodemcu = NodeMCU(ip)
         self.queue = Queue()
+        self.state = "red_off"
         Thread(target=self._consume).start()
-        self.queue.put((3,0))
+        Thread(target=self.renew).start()
 
     def off(self):
-        self.queue.put((2, 0,))
+        self.state = "red_off"
+        self.queue.put(self.state)
 
     def on(self):
-        self.queue.put((2, 1,))
+        self.state = "red_on"
+        self.queue.put(self.state)
+
+    def renew(self):
+        while True:
+            sleep(3)
+            self.queue.put(self.state)
 
     def _consume(self):
         while True:
             while not self.queue.empty():
-                pin, value = self.queue.get()
-                self.nodemcu.send(pin, value)
+                value = self.queue.get()
+                self.nodemcu.send(value)
                 self.queue.task_done()
             sleep(0.05)
