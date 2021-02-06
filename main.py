@@ -5,6 +5,7 @@ from Lamps.WiredLamp import WiredLamp
 from Lamps.WirelessLamp import WirelessLamp
 from buttons.DonateButton import DonateButton
 from buttons.Init.ObsButton import ObsButton
+from buttons.MixSoundButton import MixSoundButton
 from buttons.SwitchButton import SwitchButton
 from buttons.WordsButton import WordsButton
 from buttons.ZoomInButton import ZoomInButton
@@ -21,9 +22,9 @@ from time import sleep
 
 deck = DeviceManager().enumerate()[0]
 
-roland = Roland("V-1HD 0", 'V-1HD 1', dummy=False)
+roland = Roland("V-1HD 0", 'V-1HD 1', dummy=True)
 obs = Obs()
-arduino = Arduino(dummy=False)
+arduino = Arduino(dummy=True)
 main_screen = Screen()
 second_screen = Screen()
 lamps = LampsSwitch()
@@ -46,7 +47,7 @@ zoom_in_button = ZoomInButton()
 zoom_out_button = ZoomOutButton()
 donate_button = DonateButton()
 switch_button = SwitchButton(deck, main_screen, second_screen)
-
+sound_mix_button = MixSoundButton(obs)
 for i in range(4):
     main_screen.buttons[i] = cam_buttons[i]
     second_screen.buttons[i] = cam_buttons[i]
@@ -59,6 +60,7 @@ main_screen.buttons[13] = zoom_out_button
 main_screen.buttons[14] = words_button
 main_screen.buttons[11] = donate_button
 # main_screen.buttons[11] = recording_button
+second_screen.buttons[5] = sound_mix_button
 
 main_screen.buttons[10] = switch_button
 second_screen.buttons[10] = switch_button

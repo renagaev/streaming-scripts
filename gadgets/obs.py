@@ -43,27 +43,29 @@ class Obs:
     def set_mic_level(self, value):
         self._call(requests.SetVolume("mic", value))
 
-    def _change_sound_input(self, sec=2, to=None):
+    def transform_to_level(self, source, level):
+        current = self._call(requests.GetVolume(source)).datain["volume"]
+        step = 1 / 32
+        if level < current:
+            step *= -1
+        while True:
+            a = min(level - current, step, key=abs)
+            current += a
+            self._call(requests.SetVolume(source, current))
+            if abs(current - level) < 0.000001:
+                break
 
-        steps = 16
-        enable = [(i / steps) ** 0.5 * 1 for i in range(steps + 1)]
-        disable = enable[::-1]
-        zipped = zip(enable, disable) if to == "mic" else zip(disable, enable)
-        for e, d in zipped:
-            self.set_mic_level(e)
-            self.set_zoom_level(d)
-            # sleep(step_time)
+    def transform_sound(self, mic_level, zoom_level):
+        threading.Thread(target=self.transform_to_level, args=("mic", mic_level)).start()
+        threading.Thread(target=self.transform_to_level, args=("zoom", zoom_level)).start()
 
     def scale(self):
         self._call(requests.SetSceneItemTransform("txt", x_scale=0.7, y_scale=0.7, rotation=0))
         self._call(requests.SetSceneItemProperties("txt", position_alignment=3))
 
-    def change_sound_input(self, sec, to=None):
-        thread = threading.Thread(target=self._change_sound_input, args=(sec, to))
-        thread.start()
-
 
 if __name__ == '__main__':
     obs = Obs()
+    obs.transform_sound(0, 1)
     while True:
         sleep(1)

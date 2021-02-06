@@ -20,8 +20,8 @@ class SoundModeButton(ButtonBase):
     def on_press(self):
         if self.mode == "mic":
             self.mode = "zoom"
+            self.obs.transform_sound(0, 1)
         else:
             self.mode = "mic"
-
-        self.obs.change_sound_input(2, self.mode)
+            self.obs.transform_sound(1, 0)
         self.image = self._icon()
