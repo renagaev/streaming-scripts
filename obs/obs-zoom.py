@@ -23,7 +23,7 @@ def zoom_in():
 def zoom(spaces):
     global ZOOM_RUN
     ZOOM_RUN = True
-    source = obs.obs_get_source_by_name("cams.zoom")
+    source = obs.obs_get_source_by_name("cams")
     field_filter = obs.obs_source_get_filter_by_name(source, "zoom")
     field_filter_settings = obs.obs_data_create()
     for i in spaces:
@@ -51,7 +51,7 @@ def blur(spaces):
 
 
 def fade(spaces):
-    cams = obs.obs_get_source_by_name("cams.zoom")
+    cams = obs.obs_get_source_by_name("cams")
     blur_filter = obs.obs_source_get_filter_by_name(cams, "blur")
 
     source = obs.obs_get_source_by_name("projector")
@@ -63,11 +63,33 @@ def fade(spaces):
         obs.obs_data_release(field_filter_settings)
 
         blur_filter_settings = obs.obs_data_create()
-        obs.obs_data_set_int(blur_filter_settings, "Filter.Blur.Size", int(i*0.75))
+        obs.obs_data_set_int(blur_filter_settings, "Filter.Blur.Size", int(i * 0.75))
         obs.obs_source_update(blur_filter, blur_filter_settings)
         obs.obs_data_release(blur_filter_settings)
 
-        sleep(0.015*2)
+        sleep(0.015 * 2)
+    obs.obs_source_release(field_filter)
+    obs.obs_source_release(source)
+
+
+def donate_fade(spaces):
+    cams = obs.obs_get_source_by_name("cams")
+    blur_filter = obs.obs_source_get_filter_by_name(cams, "blur")
+
+    source = obs.obs_get_source_by_name("donate")
+    field_filter = obs.obs_source_get_filter_by_name(source, "transparency")
+    for i in spaces:
+        field_filter_settings = obs.obs_data_create()
+        obs.obs_data_set_int(field_filter_settings, "opacity", int(i))
+        obs.obs_source_update(field_filter, field_filter_settings)
+        obs.obs_data_release(field_filter_settings)
+
+        blur_filter_settings = obs.obs_data_create()
+        obs.obs_data_set_int(blur_filter_settings, "Filter.Blur.Size", int(i * 0.75))
+        obs.obs_source_update(blur_filter, blur_filter_settings)
+        obs.obs_data_release(blur_filter_settings)
+
+        sleep(0.015 * 2)
     obs.obs_source_release(field_filter)
     obs.obs_source_release(source)
 
@@ -78,6 +100,14 @@ def fade_out():
 
 def fade_in():
     fade(linspace(0, 100, 50))
+
+
+def donate_in():
+    donate_fade(linspace(100, 0, 50))
+
+
+def donate_out():
+    donate_fade(linspace(0, 100, 50))
 
 
 def linspace(lower, upper, length):
@@ -108,7 +138,9 @@ callbacks = [
     ["zoom-in", wrap(zoom_in, 0), None],
     ["zoom-out", wrap(zoom_out, 1), None],
     ["fade-in", wrap(fade_in, 2), None],
-    ["fade-out", wrap(fade_out, 3), None]
+    ["fade-out", wrap(fade_out, 3), None],
+    ["donate-in", wrap(donate_in, 4), None],
+    ["donate-out", wrap(donate_out, 5), None]
 ]
 
 

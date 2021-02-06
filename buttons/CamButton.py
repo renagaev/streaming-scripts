@@ -23,29 +23,36 @@ class CamButton(ButtonBase):
             i["on"] = False
         self.data["start"] = time()
         self.data["on"] = True
+
         self.roland.transform_to_cam(self.index)
         self.image = self.render_text("0:00", "green", 20)
 
     def _update_loop(self):
         on = False
         prev = 0
+        color = 'green'
         while True:
             sleep(0.05)
             if self.data["on"]:
                 if not on:
                     self.lamps.on(self.index)
                     on = True
-                t = int(time() - self.data["start"])
-                if t == prev: continue
-                prev = t
-                minutes = str(t // 60)
-                seconds = t % 60
+                t = time() - self.data["start"]
+                if t//0.33 == prev:
+                    continue
+                prev = t//0.33
+                elapsed = int(t)
+                minutes = str(elapsed // 60)
+                seconds = elapsed % 60
                 seconds = "0" + str(seconds) if seconds < 10 else seconds
+                if elapsed > 60:
+                    color = 'red' if color == 'green' else 'green'
                 text = f"{minutes}:{seconds}"
-                self.image = self.render_text(text, "green", 20)
+                self.image = self.render_text(text, color, 20)
             else:
                 if on:
                     on = False
                     self.lamps.off(self.index)
                 if self.image_changed:
-                    self.image = self.render_text(str(self.index+1), "black", 20)
+                    color = 'green'
+                    self.image = self.render_text(str(self.index + 1), "black", 20)

@@ -8,5 +8,6 @@ class NodeMCU:
     def send(self, path):
         try:
             requests.get(f"{self.url}/{path}", timeout=1)
+            return True
         except:
-            pass
+            return False

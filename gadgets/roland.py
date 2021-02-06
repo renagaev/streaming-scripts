@@ -59,6 +59,9 @@ class Roland:
             self.msg("B0 15 7F", "B0 15 00")
 
     def transform_to_cam(self, cam):
+        m = self.mode
+        if cam == 3 or self.active_bus.cam == 3:
+            self.mode = 'mix'
         if self.mode == "mix":
             bus = a if self.active_bus == self.b else b
             self.set_cam(bus, cam)
@@ -66,6 +69,7 @@ class Roland:
         else:
             bus = b if self.active_bus == self.b else a
             self.set_cam(bus, cam)
+        self.mode = m
 
     def set_mode_to_mix(self):
         self.msg("B0 13 01")

@@ -6,15 +6,15 @@ import logging
 import win32api
 import win32gui
 import win32con
-#logging.basicConfig(level=logging.DEBUG)
 
+
+# logging.basicConfig(level=logging.DEBUG)
 
 
 class Obs:
     def __init__(self):
         self.ws = obsws("localhost", 4444, "secret")
         self.ws.connect()
-
 
     @staticmethod
     def send_key(key):
@@ -38,12 +38,13 @@ class Obs:
         self._switch_scene("default")
 
     def set_zoom_level(self, value):
-        self._call(requests.SetVolume("cams.zoom", value))
+        self._call(requests.SetVolume("zoom", value))
 
     def set_mic_level(self, value):
         self._call(requests.SetVolume("mic", value))
 
     def _change_sound_input(self, sec=2, to=None):
+
         steps = 16
         enable = [(i / steps) ** 0.5 * 1 for i in range(steps + 1)]
         disable = enable[::-1]
