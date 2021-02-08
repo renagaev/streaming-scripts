@@ -30,4 +30,4 @@ class BlinkButton(ButtonBase):
             self.image = self._off_img
             self.lamps.off(self.index)
             sleep(sleep_time)
-        self.lamps.set_state(self.index, store["cams"][self.index]["on"])
+        self.lamps.set_state(self.index, store.cam.value == self.index)

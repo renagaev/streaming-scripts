@@ -10,24 +10,18 @@ class ZoomInButton(ButtonBase):
 
     def __init__(self):
         super().__init__()
-        self.data = store["zoom"]
-        self.state = self.data["value"]
         self.image = self._icon()
-        Thread(target=self._wait_for_change).start()
+        store.zoom.subscribe(self.on_update)
 
     def _icon(self):
-        if self.data["value"] == 1:
+        if store.zoom.value == 1:
             return self.render_icon("search-plus", "red")
         return self.render_icon("search-plus", "black")
 
     def on_press(self):
-        if self.data["value"] == 0:
-            self.data["value"] = self.state = 1
+        if store.zoom.value == 0:
+            store.zoom.value = 1
             Obs.send_key(0x74)
-        self.image = self._icon()
 
-    def _wait_for_change(self):
-        while True:
-            if self.data["value"] != self.state:
-                self.image = self._icon()
-            sleep(0.05)
+    def on_update(self, zoom_value):
+        self.image = self._icon()

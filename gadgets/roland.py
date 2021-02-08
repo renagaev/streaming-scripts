@@ -1,6 +1,7 @@
 import mido
-from time import time,sleep
+from time import time, sleep
 import threading
+
 
 class Bus:
     def __init__(self, name, cam=None, bright=None):
@@ -11,6 +12,7 @@ class Bus:
 
 a = "a"
 b = "b"
+
 
 class Roland:
 
@@ -36,8 +38,7 @@ class Roland:
         self.transform_to_bus(b)
         self.transform_to_bus(a)
         self.set_mode_to_mix()
-        #self.change_sound_input(1, self.noaudio)
-
+        # self.change_sound_input(1, self.noaudio)
 
     def msg(self, *hexs):
         if self.dummy: return
@@ -60,7 +61,7 @@ class Roland:
 
     def transform_to_cam(self, cam):
         m = self.mode
-        if cam == 3 or self.active_bus.cam == 3:
+        if cam == 3 or (self.active_bus is not None and self.active_bus.cam == 3):
             self.mode = 'mix'
         if self.mode == "mix":
             bus = a if self.active_bus == self.b else b
@@ -74,9 +75,7 @@ class Roland:
     def set_mode_to_mix(self):
         self.msg("B0 13 01")
 
-
     def recieve(self, msg):
-        print(msg.hex())
         if msg.type == "program_change":
             self.selected_bus.cam = msg.program
             if self.selected_bus == self.active_bus:
@@ -167,8 +166,6 @@ class Roland:
             sleep(sleep_time)
         s(110)
 
-
-
     def _change_sound_input(self, sec=2, to=None):
         if to is None:
             to = self.noaudio
@@ -189,6 +186,7 @@ class Roland:
     def change_sound_input(self, sec, to=None):
         thread = threading.Thread(target=self._change_sound_input, args=(sec, to))
         thread.start()
+
 
 if __name__ == '__main__':
     r = Roland("V-1HD 0", "V-1HD 1")

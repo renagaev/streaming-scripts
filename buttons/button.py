@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from PIL import Image, ImageDraw, ImageFont, ImageOps
+import os
 
 
 class ButtonBase(ABC):
@@ -30,8 +31,7 @@ class ButtonBase(ABC):
     def render_text(self, text, color, fontsize):
         image = self._create_image(color)
         draw = ImageDraw.Draw(image)
-
-        font = ImageFont.truetype("C:/Users/я/PycharmProjects/streaming-scripts/OpenSans-Regular.ttf", fontsize)
+        font = ImageFont.truetype(os.path.abspath("./assets/OpenSans-Regular.ttf"), fontsize)
         label_w, label_h = draw.textsize(text, font=font)
         label_pos = ((image.width - label_w) // 2, (image.height - label_h) // 2 - 1)
         draw.text(label_pos, text=text, font=font, fill="white")
@@ -39,7 +39,7 @@ class ButtonBase(ABC):
 
     def render_icon(self, icon, color="black"):
         image = self._create_image(color)
-        icon = Image.open(f"C:/Users/я/PycharmProjects/streaming-scripts/icons/{icon}.png")
+        icon = Image.open(os.path.abspath(f"./assets/icons/{icon}.png"))
         icon.thumbnail((45, 45), Image.LANCZOS)
         r, g, b, a = icon.split()
         rgb_image = Image.merge('RGB', (r, g, b))
