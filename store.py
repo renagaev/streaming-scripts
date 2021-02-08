@@ -24,6 +24,7 @@ class Store:
     def __init__(self):
         self.zoom = ReactiveValue(0)
         self.cam = ReactiveValue(-1)
+        self.words_showed = ReactiveValue(False)
 
 
 store = Store()

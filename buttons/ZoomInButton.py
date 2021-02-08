@@ -8,8 +8,9 @@ from store import store
 
 class ZoomInButton(ButtonBase):
 
-    def __init__(self):
+    def __init__(self, obs: Obs):
         super().__init__()
+        self.obs = obs
         self.image = self._icon()
         store.zoom.subscribe(self.on_update)
 
@@ -21,7 +22,7 @@ class ZoomInButton(ButtonBase):
     def on_press(self):
         if store.zoom.value == 0:
             store.zoom.value = 1
-            Obs.send_key(0x74)
+            self.obs.zoom_cams_in()
 
     def on_update(self, zoom_value):
         self.image = self._icon()

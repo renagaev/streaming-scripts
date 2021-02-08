@@ -9,7 +9,7 @@ class MixSoundButton(ButtonBase):
         self.obs = obs
 
         self.mode = "mic"
-        self.image = self.render_text("sound\nmix", "black", 20)
+        self.image = self.render_text("sound\nmix", "black", 17)
 
     def on_press(self):
         self.obs.transform_sound(1, 0.8)
