@@ -3,6 +3,7 @@ from threading import Thread
 from buttons.button import ButtonBase
 from store import store
 from time import time, sleep
+from utils import format_time
 
 
 class CamButton(ButtonBase):
@@ -30,7 +31,6 @@ class CamButton(ButtonBase):
         if cam_value != self.index:
             self.image = self.render_text(str(self.index + 1), "black", 20)
 
-
     def _update_loop(self):
         prev = 0
         color = 'green'
@@ -43,12 +43,7 @@ class CamButton(ButtonBase):
                 continue
             prev = t // 0.33
             elapsed = int(t)
-            minutes = str(elapsed // 60)
-            seconds = elapsed % 60
-            seconds = "0" + str(seconds) if seconds < 10 else seconds
             if elapsed > 60:
                 color = 'red' if color == 'green' else 'green'
-            text = f"{minutes}:{seconds}"
-            self.image = self.render_text(text, color, 20)
+            self.image = self.render_text(format_time(elapsed), color, 20)
         self.lamps.off(self.index)
-        #self.image = self.render_text(str(self.index + 1), "black", 20)

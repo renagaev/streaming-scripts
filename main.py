@@ -18,21 +18,22 @@ from buttons.CamButton import CamButton
 from buttons.BlinkButton import BlinkButton
 from buttons.RolandModeButton import RolandModeButton
 from buttons.SoundModeButton import SoundModeButton
+from buttons.EndStreamButton import EndStreamButton
 from gadgets.roland import Roland
 from time import sleep
 
 deck = DeviceManager().enumerate()[0]
 
-roland = Roland("V-1HD 0", 'V-1HD 1', dummy=True)
-obs = Obs("OBS 26.1.1 (64-bit, windows) - Profile: Безымянный - Scenes: Безымянный")
-arduino = Arduino(dummy=True)
+roland = Roland("V-1HD 0", 'V-1HD 1', dummy=False)
+obs = Obs()
+arduino = Arduino(dummy=False)
 main_screen = Screen()
 second_screen = Screen()
 lamps = LampsSwitch()
 
 lamps.lamps[0] = WiredLamp(arduino, 0)
-lamps.lamps[1] = WirelessLamp("192.168.0.103")
-lamps.lamps[2] = WirelessLamp("192.168.0.102")
+lamps.lamps[1] = WirelessLamp("192.168.0.106")
+lamps.lamps[2] = WirelessLamp("192.168.0.103")
 lamps.lamps[3] = WiredLamp(arduino, 3)
 
 deck.open()
@@ -50,6 +51,8 @@ donate_button = DonateButton(obs)
 subscribe_button = SubscribeButton(obs)
 switch_button = SwitchButton(deck, main_screen, second_screen)
 sound_mix_button = MixSoundButton(obs)
+end_stream_button = EndStreamButton(obs, 30)
+
 for i in range(4):
     main_screen.buttons[i] = cam_buttons[i]
     second_screen.buttons[i] = cam_buttons[i]
@@ -64,6 +67,8 @@ main_screen.buttons[11] = subscribe_button
 
 second_screen.buttons[5] = sound_mix_button
 second_screen.buttons[6] = donate_button
+second_screen.buttons[8] = end_stream_button
+
 
 main_screen.buttons[10] = switch_button
 second_screen.buttons[10] = switch_button
@@ -71,4 +76,4 @@ second_screen.buttons[10] = switch_button
 main_screen.attach(deck)
 
 while True:
-    sleep(0.1)
+    sleep(1)

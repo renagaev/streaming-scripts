@@ -102,11 +102,11 @@ def fade_in():
     fade(linspace(0, 100, 50))
 
 
-def donate_in():
+def donate_out():
     donate_fade(linspace(100, 0, 50))
 
 
-def donate_out():
+def donate_in():
     donate_fade(linspace(0, 100, 50))
 
 

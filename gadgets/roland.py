@@ -18,7 +18,7 @@ class Roland:
 
     def __init__(self, inport, outport, dummy=False):
         self.dummy = dummy
-        self.on_cam_change = lambda x: print(x)
+        self.on_cam_change = lambda x: None
         if not dummy:
             self.input = mido.open_input(inport)
             self.input.callback = self.recieve
@@ -110,7 +110,6 @@ class Roland:
                     if i > 127:
                         i = 127
         elif msg.type == "control_change" and msg.control == 0:
-            print(f"test {msg.value}")
             self.selected_bus = self.b if msg.value else self.a
 
     @staticmethod

@@ -5,13 +5,14 @@ from threading import Thread
 from buttons.button import ButtonBase
 from gadgets.obs import Obs
 from store import store
+from utils import format_time
 
 
 class SubscribeButton(ButtonBase):
 
     def __init__(self, obs: Obs):
         super().__init__()
-        self.iterval = 10*60
+        self.iterval = 10 * 60
         self.safe_range = 7
         self.obs = obs
         self.list = [
@@ -35,11 +36,7 @@ class SubscribeButton(ButtonBase):
             time.sleep(0.3)
             elapsed = self.get_elapsed()
             self.try_show()
-            minutes = str(elapsed // 60)
-            seconds = elapsed % 60
-            seconds = "0" + str(seconds) if seconds < 10 else seconds
-            text = f"subs:\n{minutes}:{seconds}"
-
+            text = f"subs:\n{format_time(elapsed)}"
             color = "black"
             if elapsed <= 7:
                 color = "red"
