@@ -6,7 +6,6 @@ from time import sleep, time
 ZOOM_RUN = False
 SOURCE_NAME = "cams.zoom"
 
-
 def zoom_out():
     global ZOOM_RUN
     if ZOOM_RUN: return
@@ -144,6 +143,22 @@ callbacks = [
 ]
 
 
+def dup():
+    current_scene = obs.obs_frontend_get_current_scene()
+    scene = obs.obs_scene_from_source(current_scene)
+    settings = obs.obs_data_create()
+    obs.obs_data_set_string(
+        settings, "Device", "The quick brown fox jumps over the lazy dog"
+    )
+    source = obs.obs_source_create("text_gdiplus", "test_py", settings)
+    obs.obs_scene_add(scene, source)
+
+    obs.obs_scene_release(scene)
+    obs.obs_data_release(settings)
+    obs.obs_source_release(source)
+
+            
+            
 def script_load(settings):
     for i in callbacks:
         hotkey_id = obs.obs_hotkey_register_frontend(i[0], i[0], i[1])

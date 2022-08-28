@@ -1,3 +1,7 @@
+import os
+
+from PIL import Image
+
 from buttons.button import ButtonBase
 
 
@@ -6,19 +10,24 @@ class RolandModeButton(ButtonBase):
     def __init__(self, roland):
         super().__init__()
         self.roland = roland
-        self.mode = "mix"
+        self.roland.mode = "mix"
+        self.len = 0
+        self.roland.set_zero_fade_len()
         self.image = self._icon()
 
     def _icon(self):
-        if self.mode == "cut":
-            return self.render_icon("rabbit-fast")
-        else:
-            return self.render_icon("turtle")
+        i = Image.open(os.path.abspath(f"./assets/icons/fade_{self.len}_sec.png"))
+        return i
+
 
     def on_press(self):
-        if self.mode == "mix":
-            self.mode = "cut"
+        if self.len == 0:
+            self.roland.set_shord_fade_len()
+            self.len = 2
+        elif self.len == 2:
+            self.roland.set_long_fade_len()
+            self.len = 4
         else:
-            self.mode = "mix"
-        self.roland.mode = self.mode
+            self.roland.set_zero_fade_len()
+            self.len = 0
         self.image = self._icon()

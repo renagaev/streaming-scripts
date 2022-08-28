@@ -17,7 +17,8 @@ class ButtonBase(ABC):
 
     @image.setter
     def image(self, value):
-        self.on_image_change(value)
+        if self.on_image_change:
+            self.on_image_change(value)
         self.image_changed = True
         self._image = value
 

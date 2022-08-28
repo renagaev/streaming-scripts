@@ -10,8 +10,11 @@ from obswebsocket import obsws, requests
 class Obs:
     def __init__(self):
         self.ws = obsws("localhost", 4444, "secret")
+
         self.ws.connect()
 
+    def set_file(self, source, path):
+        self._call(requests.SetSourceSettings(source, {"local_file": path}))
 
     def _hotkey(self, name):
         self._call(TriggerHotkey(name))
@@ -40,8 +43,6 @@ class Obs:
     def end_stream_and_recording(self):
         self._call(requests.StopRecording())
         self._call(requests.StopStreaming())
-
-
 
     def _call(self, obj):
         return self.ws.call(obj)

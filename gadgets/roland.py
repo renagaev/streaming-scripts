@@ -16,20 +16,25 @@ b = "b"
 
 class Roland:
 
-    def __init__(self, inport, outport, dummy=False):
+    def __init__(self, dummy=False):
         self.dummy = dummy
         self.on_cam_change = lambda x: None
         if not dummy:
-            self.input = mido.open_input(inport)
+            inputs = [i for i in mido.get_input_names() if i.startswith("V-1HD")]
+            if len(inputs) == 0:
+                print("ROLAND НЕ ПОДКЛЮЧЕН")
+            p = mido.get_output_names()
+            self.input = mido.open_input(inputs[0])
+            outputs = [i for i in mido.get_output_names() if i.startswith("V-1HD")]
             self.input.callback = self.recieve
-            self.output = mido.open_output(outport)
+            self.output = mido.open_output(outputs[0])
         self.a = Bus("a")
         self.b = Bus("b")
         self.selected_bus = None
         self.active_bus = None
         self.last_br = 150
         self.last_transform_time = time()
-        self.mode = "mix"
+        self.mode = "cut"
         self.audio = "mic"
         self.noaudio = "in"
         self.muted = False
@@ -38,6 +43,7 @@ class Roland:
         self.transform_to_bus(b)
         self.transform_to_bus(a)
         self.set_mode_to_mix()
+        self.fade_len = 0
         # self.change_sound_input(1, self.noaudio)
 
     def msg(self, *hexs):
@@ -60,9 +66,6 @@ class Roland:
             self.msg("B0 15 7F", "B0 15 00")
 
     def transform_to_cam(self, cam):
-        m = self.mode
-        if cam == 3 or (self.active_bus is not None and self.active_bus.cam == 3):
-            self.mode = 'mix'
         if self.mode == "mix":
             bus = a if self.active_bus == self.b else b
             self.set_cam(bus, cam)
@@ -70,12 +73,32 @@ class Roland:
         else:
             bus = b if self.active_bus == self.b else a
             self.set_cam(bus, cam)
-        self.mode = m
 
     def set_mode_to_mix(self):
         self.msg("B0 13 01")
 
+    def set_long_fade_len(self):
+        self.fade_len = 4
+        self.msg("B0 12 73")
+
+    def set_shord_fade_len(self):
+        self.fade_len = 2
+        self.msg("B0 12 1D")
+
+    def set_zero_fade_len(self):
+        self.fade_len = 0
+        self.msg("B0 12 00")
+
+    def set_fade_len(self, fade_len):
+        if fade_len == 4:
+            self.set_long_fade_len()
+        if fade_len == 2:
+            self.set_shord_fade_len()
+        if fade_len == 0:
+            self.set_zero_fade_len()
+
     def recieve(self, msg):
+        # print(msg, "----", msg.hex())
         if msg.type == "program_change":
             self.selected_bus.cam = msg.program
             if self.selected_bus == self.active_bus:

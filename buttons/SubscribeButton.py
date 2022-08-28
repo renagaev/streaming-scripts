@@ -20,7 +20,7 @@ class SubscribeButton(ButtonBase):
             "like_sub_notif",
             "notif_square",
             "like_square",
-            "like_sub_notif_icon"
+            # "like_sub_notif_icon"
         ]
         self.last_name = None
         self.last_time = time.time()
@@ -45,7 +45,7 @@ class SubscribeButton(ButtonBase):
     def try_show(self):
         if self.get_elapsed() != 0:
             return
-        if store.cam.value == 0:
+        if store.cam.value == 0 or store.cam.value == 3:
             return
         if store.words_showed.value:
             return

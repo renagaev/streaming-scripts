@@ -25,6 +25,7 @@ class Store:
         self.zoom = ReactiveValue(0)
         self.cam = ReactiveValue(-1)
         self.words_showed = ReactiveValue(False)
+        self.aten_cam = ReactiveValue(4)
 
 
 store = Store()

@@ -14,8 +14,6 @@ class Screen:
         self.queue = Queue()
         Thread(target=self._update_loop).start()
 
-
-
     def update_image(self, index, image):
         if self.deck is None or image is None:
             return
@@ -38,7 +36,6 @@ class Screen:
                 button.on_image_change = partial(self.update_image, index)
             else:
                 self.update_image(index, Image.new("RGB", (72, 72), "black"))
-
 
     def detach(self):
         self.deck = None
