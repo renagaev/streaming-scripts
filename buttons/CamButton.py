@@ -17,19 +17,24 @@ class CamButton(ButtonBase):
         self.image = self.render_text(str(self.index + 1), "black", 20)
         store.cam.subscribe(self._on_cam_change)
 
-    def on_press(self):
-        if store.cam.value == self.index:
-            return
-        store.cam.value = self.index
+    def enable(self):
         self.lamps.on(self.index)
         self.roland.transform_to_cam(self.index)
         self.image = self.render_text("0:00", "green", 20)
         self.start = time()
         Thread(target=self._update_loop).start()
 
+    def on_press(self):
+        if store.cam.value == self.index:
+            return
+        store.cam.value = self.index
+        self.enable()
+
     def _on_cam_change(self, cam_value):
         if cam_value != self.index:
             self.image = self.render_text(str(self.index + 1), "black", 20)
+        else:
+            self.enable()
 
     def _update_loop(self):
         prev = 0

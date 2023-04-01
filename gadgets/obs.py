@@ -37,6 +37,20 @@ class Obs:
     def hide_donate(self):
         self._hotkey("donate-out")
 
+    def recreate_projector(self):
+        self._hotkey("recreate-projector")
+
+    def start_replay_buffer(self):
+        self._call(requests.StartReplayBuffer())
+
+    def stop_replay_buffer(self):
+        self._call(requests.SaveReplayBuffer())
+        self._call(requests.StopReplayBuffer())
+
+    def get_transition_duration(self):
+        res = self._call(requests.GetCurrentTransition())
+        return res.datain["duration"]
+
     def is_streaming(self):
         return self._call(requests.GetStreamingStatus()).datain["recording"]
 
@@ -53,7 +67,7 @@ class Obs:
             return
         self._call(requests.SetCurrentScene(name))
 
-    def switch_to_sing(self):
+    def switch_to_split(self):
         self._switch_scene("split")
 
     def switch_to_default(self):
@@ -101,7 +115,18 @@ class TriggerHotkeyBySequence(requests.Baserequests):
 
 
 if __name__ == '__main__':
+
+    settings = {
+        'last_video_device_id': 'FHD Capture:\\\\?\\usb#22vid_1bcf&pid_2c99&mi_00#227&28cf3259&0&0000#22{65e8773d-8f56-11d0-a3b9-00a0c9223196}\\global',
+        'video_device_id': 'FHD Capture:\\\\?\\usb#22vid_1bcf&pid_2c99&mi_00#227&28cf3259&0&0000#22{65e8773d-8f56-11d0-a3b9-00a0c9223196}\\global'}
+
+
+    def get_settings():
+        obs.ws.call(requests.GetSourceSettings("projector"))
+
+
     obs = Obs()
+    z = obs.ws.call(requests)
     z = obs.ws.call(requests.GetSourceSettings("sub_icon"))
     z = obs.ws.call(TriggerHotkey("donate-in"))
     r = 0

@@ -3,6 +3,8 @@ from threading import Thread
 from queue import Queue
 from time import sleep
 
+
+
 class Arduino:
     def __init__(self, dummy=False):
 

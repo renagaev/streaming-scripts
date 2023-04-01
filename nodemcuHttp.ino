@@ -16,8 +16,17 @@ void setup(void) {
   digitalWrite(5, HIGH);
   Serial.begin(115200);
   WiFi.begin(ssid, password);
+  bool low = true;
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
+    if(low){
+      digitalWrite(16, LOW);
+
+    }
+    else{
+      digitalWrite(16, HIGH);
+      }
+    low = !low;
     Serial.print(".");
   }
   digitalWrite(16, LOW);

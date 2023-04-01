@@ -6,6 +6,7 @@ from time import sleep, time
 ZOOM_RUN = False
 SOURCE_NAME = "cams.zoom"
 
+
 def zoom_out():
     global ZOOM_RUN
     if ZOOM_RUN: return
@@ -53,7 +54,7 @@ def fade(spaces):
     cams = obs.obs_get_source_by_name("cams")
     blur_filter = obs.obs_source_get_filter_by_name(cams, "blur")
 
-    source = obs.obs_get_source_by_name("projector")
+    source = obs.obs_get_source_by_name("projector.main")
     field_filter = obs.obs_source_get_filter_by_name(source, "transparency")
     for i in spaces:
         field_filter_settings = obs.obs_data_create()
@@ -118,7 +119,37 @@ def log(txt):
         f.write(str(txt) + "\n")
 
 
-ends = [0, 0, 0, 0, 0, 0]
+def recreate_projector():
+    current_scene = obs.obs_frontend_get_current_scene()
+    scene = obs.obs_scene_from_source(current_scene)
+
+    existing = obs.obs_get_source_by_name("projector")
+    scene_item = obs.obs_scene_find_source(scene, "projector")
+    obs.obs_sceneitem_remove(scene_item)
+    obs.obs_source_remove(existing)
+
+    obs.obs_source_release(existing)
+    obs.obs_sceneitem_release(scene_item)
+
+
+    sample = obs.obs_get_source_by_name("projector.sample")
+    settings = obs.obs_source_get_settings(sample)
+    log(obs.obs_source_get_id(sample))
+    new_settings = obs.obs_data_create()
+    obs.obs_data_apply(new_settings, settings)
+
+    new = obs.obs_source_create("dshow_input", "projector", new_settings, None)
+    obs.obs_source_copy_filters(new, sample)
+    obs.obs_scene_add(scene, new)
+    obs.obs_source_set_audio_active(new, False)
+
+    obs.obs_source_release(sample)
+    obs.obs_data_release(settings)
+    obs.obs_data_release(new_settings)
+    obs.obs_scene_release(scene)
+
+
+ends = [0, 0, 0, 0, 0, 0, 0]
 
 
 def wrap(f, idx):
@@ -139,7 +170,8 @@ callbacks = [
     ["fade-in", wrap(fade_in, 2), None],
     ["fade-out", wrap(fade_out, 3), None],
     ["donate-in", wrap(donate_in, 4), None],
-    ["donate-out", wrap(donate_out, 5), None]
+    ["donate-out", wrap(donate_out, 5), None],
+    ["recreate-projector", wrap(recreate_projector, 6), None]
 ]
 
 
@@ -157,8 +189,7 @@ def dup():
     obs.obs_data_release(settings)
     obs.obs_source_release(source)
 
-            
-            
+
 def script_load(settings):
     for i in callbacks:
         hotkey_id = obs.obs_hotkey_register_frontend(i[0], i[0], i[1])
