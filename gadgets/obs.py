@@ -2,6 +2,7 @@ import threading
 from time import sleep
 
 from obswebsocket import obsws, requests
+from datetime import datetime, timedelta
 
 
 # logging.basicConfig(level=logging.DEBUG)
@@ -9,12 +10,18 @@ from obswebsocket import obsws, requests
 
 class Obs:
     def __init__(self):
-        self.ws = obsws("localhost", 4444, "secret")
-
+        self.ws = obsws("localhost", 4444, "secret", )
+        self.a = datetime.now()
         self.ws.connect()
 
     def set_file(self, source, path):
         self._call(requests.SetSourceSettings(source, {"local_file": path}))
+
+    def get_steam_timecode(self):
+        res = self._call(requests.GetStreamingStatus())
+        if res.datain["streaming"]:
+            dt = datetime.strptime(res.datain["stream-timecode"], "%H:%M:%S.%f")
+            return timedelta(seconds=dt.hour * 3600 + dt.minute * 60 + dt.second)
 
     def _hotkey(self, name):
         self._call(TriggerHotkey(name))

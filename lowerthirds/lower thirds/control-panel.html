@@ -77,6 +77,7 @@
         position = "left"
 
         bc.postMessage(name_to_send + '|' + function_to_send + '|' + position + '|' + 'animateIn'); /* send */
+        fetch("http://127.0.0.1:8080/text?" + new URLSearchParams({    text: function_to_send + " " + name_to_send}), {method: "POST"})
     };
 
     function function_hide() {
