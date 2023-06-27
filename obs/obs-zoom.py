@@ -5,7 +5,9 @@ from time import sleep, time
 
 ZOOM_RUN = False
 SOURCE_NAME = "cams.zoom"
-
+def log(txt):
+    with open("C:\\Users\\admin\\PycharmProjects\\streaming-scripts\\obs\\log.txt", "a") as f:
+        f.write(str(txt) + "\n")
 
 def zoom_out():
     global ZOOM_RUN
@@ -27,8 +29,8 @@ def zoom(spaces):
     field_filter = obs.obs_source_get_filter_by_name(source, "zoom")
     field_filter_settings = obs.obs_data_create()
     for i in spaces:
-        obs.obs_data_set_double(field_filter_settings, "Filter.Transform.Scale.X", i)
-        obs.obs_data_set_double(field_filter_settings, "Filter.Transform.Scale.Y", i)
+        obs.obs_data_set_double(field_filter_settings, "scale_x", i)
+        obs.obs_data_set_double(field_filter_settings, "scale_y", i)
         obs.obs_source_update(field_filter, field_filter_settings)
         sleep(0.03 / 2)
     obs.obs_data_release(field_filter_settings)
@@ -114,9 +116,7 @@ def linspace(lower, upper, length):
     return [lower + x * (upper - lower) / (length - 1) for x in range(length)]
 
 
-def log(txt):
-    with open("C:\\Users\\admin\\PycharmProjects\\streaming-scripts\\obs\\log.txt", "a") as f:
-        f.write(str(txt) + "\n")
+
 
 
 def recreate_projector():

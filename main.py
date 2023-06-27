@@ -46,7 +46,7 @@ aten = Aten(dummy=dummy)
 main_screen = Screen()
 second_screen = Screen()
 lamps = LampsSwitch()
-holyrics = Holyrics("http://192.168.1.107:8092", "K3XjOv1FsKHXW6g6")
+holyrics = Holyrics("http://192.168.0.110:8092", "K3XjOv1FsKHXW6g6")
 timeCodeWorker = TimeCodeWorker(holyrics, client)
 
 lamps.lamps[0] = WiredLamp(arduino, 0)  # WirelessLamp(["192.168.3.141"])
@@ -104,7 +104,8 @@ def init_streamdeck():
 
 init_streamdeck()
 storage = Storage()
-run_app(storage)
 timeCodeWorker.run()
+run_app(storage)
+
 while True:
     sleep(1)        

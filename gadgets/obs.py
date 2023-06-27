@@ -1,4 +1,5 @@
 import threading
+import time
 from time import sleep
 
 from obswebsocket import obsws, requests
@@ -10,7 +11,7 @@ from datetime import datetime, timedelta
 
 class Obs:
     def __init__(self):
-        self.ws = obsws("localhost", 4444, "secret", )
+        self.ws = obsws("localhost", 4454, "secret" )
         self.a = datetime.now()
         self.ws.connect()
 
@@ -18,13 +19,13 @@ class Obs:
         self._call(requests.SetSourceSettings(source, {"local_file": path}))
 
     def get_steam_timecode(self):
-        res = self._call(requests.GetStreamingStatus())
-        if res.datain["streaming"]:
-            dt = datetime.strptime(res.datain["stream-timecode"], "%H:%M:%S.%f")
+        res = self._call(requests.GetStreamStatus())
+        if res.getOutputActive():
+            dt = datetime.strptime(res.getOutputTimecode(), "%H:%M:%S.%f")
             return timedelta(seconds=dt.hour * 3600 + dt.minute * 60 + dt.second)
 
     def _hotkey(self, name):
-        self._call(TriggerHotkey(name))
+        self._call(requests.TriggerHotkeyByName(hotkeyName=name))
 
     def zoom_cams_in(self):
         self._hotkey("zoom-in")
@@ -55,8 +56,8 @@ class Obs:
         self._call(requests.StopReplayBuffer())
 
     def get_transition_duration(self):
-        res = self._call(requests.GetCurrentTransition())
-        return res.datain["duration"]
+        res = self._call(requests.GetCurrentSceneTransition())
+        return res.getTransitionDuration()
 
     def is_streaming(self):
         return self._call(requests.GetStreamingStatus()).datain["recording"]
@@ -69,10 +70,10 @@ class Obs:
         return self.ws.call(obj)
 
     def _switch_scene(self, name):
-        curr = self._call(requests.GetCurrentScene()).datain["name"]
+        curr = self._call(requests.GetCurrentProgramScene()).getCurrentProgramSceneName()
         if curr == name:
             return
-        self._call(requests.SetCurrentScene(name))
+        self._call(requests.SetCurrentProgramScene(sceneName=name))
 
     def switch_to_split(self):
         self._switch_scene("split")
@@ -87,14 +88,16 @@ class Obs:
         self._call(requests.SetSceneItemProperties(name, visible=False))
 
     def transform_to_level(self, source, level):
-        current = self._call(requests.GetVolume(source)).datain["volume"]
+        s = requests.GetVolume()
+        current = self._call(requests.GetInputVolume(inputName=source)).getInputVolumeMul()
         step = 1 / 32
         if level < current:
             step *= -1
         while True:
             a = min(level - current, step, key=abs)
             current += a
-            self._call(requests.SetVolume(source, current))
+            self._call(requests.SetInputVolume(inputName=source, inputVolumeMul=current))
+            time.sleep(0.05)
             if abs(current - level) < 0.000001:
                 break
 

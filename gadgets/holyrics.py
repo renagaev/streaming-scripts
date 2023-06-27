@@ -10,7 +10,7 @@ class Holyrics:
 
     def __request(self, action, params={}):
         try:
-            res = requests.post(f"{url}/api/{action}",
+            res = requests.post(f"{self.url}/api/{action}",
                                 params={"token": self.token},
                                 json=params,
                                 headers={'Content-Type': 'application/json'})

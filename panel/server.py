@@ -47,8 +47,6 @@ class PanelService:
         to_start = (start - datetime.now()).total_seconds() - self.file_duration
         self.timer = Timer(to_start, self.start)
         self.timer.start()
-
-    def start(self):
         
 
 

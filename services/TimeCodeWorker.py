@@ -11,7 +11,7 @@ class TimeCodeWorker:
         self.holyrics = holyrics
 
     def run(self):
-        Thread(target=self.__run()).start()
+        Thread(target=self.__run).start()
 
     def __run(self):
         last = None
