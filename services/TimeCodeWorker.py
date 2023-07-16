@@ -14,16 +14,11 @@ class TimeCodeWorker:
         Thread(target=self.__run).start()
 
     def __run(self):
-        last = None
         while True:
-            time.sleep(0.5)
+            time.sleep(2)
             try:
                 curr_song = self.holyrics.get_current_song_title()
-                if curr_song is None or curr_song == last:
-                    continue
-
-                last = curr_song
-                self.client.set_text(f"{last}. Общее пение")
+                self.client.set_text(f"{curr_song}. Общее пение")
 
             except Exception as e:
                 print(e)

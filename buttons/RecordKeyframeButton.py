@@ -5,7 +5,6 @@ from PIL import Image
 from buttons.button import ButtonBase
 from gadgets.obs import Obs
 from services.Client import Client
-from services.Storage import Storage, KeyFrame
 from datetime import datetime, timedelta
 
 
@@ -21,5 +20,4 @@ class RecordKeyframeButton(ButtonBase):
         if not timecode:
             return
         now = datetime.now()
-        keyframe = KeyFrame(now, now - timecode)
-        self.client.record_keyframe(keyframe)
+        self.client.record_keyframe(now, now - timecode)

@@ -1,59 +1,62 @@
 import sqlite3
-from datetime import *
+from datetime import datetime, timedelta
 from typing import Iterable
+from tinydb import TinyDB, Query, JSONStorage
+from tinydb_serialization import SerializationMiddleware
+from tinydb_serialization.serializers import DateTimeSerializer
 
 
-class KeyFrame:
-    def __init__(self, created: datetime, stream_started: datetime):
-        self.created = created
-        self.stream_started = stream_started
-        self.elapsed: timedelta = created - stream_started
 
 
 class Record:
-    def __init__(self, created, stream_started, note):
+    def __init__(self, id: int, created: datetime, stream_started: datetime, note: str, candidates):
         self.note = note
         self.stream_started = stream_started
-        self.creted = created
+        self.created = created
         self.elapsed: timedelta = created - stream_started
+        self.candidates = candidates
+        self.id = id
+
+    @classmethod
+    def from_document(i, document):
+        return Record(document.doc_id, document["created"], document["stream_start"], document["text"], document  ["candidates"])
 
 
 class Storage:
-    def create_connection(self):
-        return sqlite3.connect("storage.sqlite",
-                               detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
 
     def __init__(self):
-        with self.create_connection() as conn:
-            conn.execute("""CREATE TABLE IF NOT EXISTS keyframes (
-                                    created timestamp,
-                                    stream_start timestamp,
-                                    note text);""")
+        serialization = SerializationMiddleware(JSONStorage)
+        serialization.register_serializer(DateTimeSerializer(), "TinyDate")
+        self.db = TinyDB("db.json", storage=serialization)
+        self.keyframes = self.db.table("keyframes")
 
-    def record_keyframe(self, keyframe: KeyFrame):
-        with self.create_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute("insert into keyframes (created, stream_start) values (?, ?);",
-                           (keyframe.created, keyframe.stream_started))
-            conn.commit()
+    def record_keyframe(self, created, stream_started):
+        keyframe_id = self.keyframes.insert({"created": created,
+                                             "stream_start": stream_started,
+                                             "text": None,
+                                             "candidates": []})
+        return Record.from_document(self.keyframes.get(doc_id=keyframe_id))
 
-    def add_text(self, created, text):
-        with self.create_connection() as conn:
-            try:
-                r = conn.execute("""update keyframes set note = ? where rowid in 
-                                (select rowid from keyframes where created < ? order by created desc limit 1);""",
-                             (text, created))
-            except Exception as e:
-                print(e)
-            x = 0
+    def record_text(self, created: datetime, text):
+        q = Query()
+        keyframe = self.keyframes.search(q.created < created)[-1]
+        if text not in keyframe["candidates"]:
+            keyframe["candidates"].append(text)
+            self.keyframes.upsert(keyframe)
+            return keyframe.doc_id, text
+        return None
 
-    def load_timestamps_on_date(self, creation_date: datetime) -> Iterable[Record]:
-        with self.create_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute("select created, stream_start, note from keyframes where date(created) = date(?)",
-                           [creation_date])
-            res = [Record(i[0], i[1], i[2]) for i in cursor.fetchall()]
-            return res
+    def get_last_keyframes(self) -> Iterable[Record]:
+        q = Query()
+        last = self.keyframes.all()[-1]
+        keyframes = self.keyframes.search(q.stream_start > (last["stream_start"] + timedelta(minutes=-1)))
+        return [Record.from_document(i) for i in keyframes]
+
+    def update_note(self, keyframe_id, note):
+        q = Query()
+        keyframe = self.keyframes.get(doc_id=keyframe_id)
+        keyframe["text"] = note
+        self.keyframes.upsert(keyframe)
 
 
 if __name__ == '__main__':
@@ -61,8 +64,8 @@ if __name__ == '__main__':
 
     storage = Storage()
     now = datetime.now()
-    storage.record_keyframe(KeyFrame(now - timedelta(seconds=10), datetime.now() - timedelta(minutes=1, seconds=10)))
-    storage.record_keyframe(KeyFrame(now, datetime.now() - timedelta(minutes=1, seconds=10)))
-    storage.add_text(datetime.now(), "asssas")
-    x = storage.load_timestamps_on_date(datetime.now())
+    # storage.record_keyframe(now - timedelta(seconds=10), now - timedelta(minutes=1, seconds=10))
+    # storage.record_keyframe(now, now - timedelta(minutes=1, seconds=10))
+    # storage.record_text(datetime.now(), "asssas")
+    x = storage.get_last_keyframes()
     s = 0
