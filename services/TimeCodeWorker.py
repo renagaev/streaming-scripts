@@ -18,7 +18,8 @@ class TimeCodeWorker:
             time.sleep(2)
             try:
                 curr_song = self.holyrics.get_current_song_title()
-                self.client.set_text(f"{curr_song}. Общее пение")
+                if curr_song:
+                    self.client.set_text(f"{curr_song}. Общее пение")
 
             except Exception as e:
                 print(e)
