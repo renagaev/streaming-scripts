@@ -1,7 +1,7 @@
 from StreamDeck.DeviceManager import DeviceManager
 
 from Lamps.LampsSwitch import LampsSwitch
-from Lamps.SocketLamp import SocketLamp
+from Lamps.TallyLamp import TallyLamp
 from Lamps.WiredLamp import WiredLamp
 from Lamps.WirelessLamp import WirelessLamp
 from buttons.AtenSwitchButton import AtenSwitchButton
@@ -20,6 +20,7 @@ from gadgets.aten import Aten
 from buttons.MultipleCamButton import MultipleCamButton
 from gadgets.holyrics import Holyrics
 from gadgets.obs import Obs
+from gadgets.tally import TallySender
 from screen import Screen
 from buttons.CamButton import CamButton
 from buttons.BlinkButton import BlinkButton
@@ -34,24 +35,37 @@ from services.Server import run_app
 
 from services.Storage import Storage
 from services.TimeCodeWorker import TimeCodeWorker
+from services.yotube import YouTubeScheduler
 
 dummy = False
 
 client = Client()
-arduino = Arduino(dummy=dummy)
+arduino = Arduino(dummy=True)
+tallySender = TallySender()
 deck = DeviceManager().enumerate()[0]
 roland = Roland(dummy=dummy)
 obs = Obs()
-aten = Aten(dummy=dummy)
+aten = Aten(dummy=True)
 main_screen = Screen()
 second_screen = Screen()
 lamps = LampsSwitch()
-holyrics = Holyrics("http://192.168.0.110:8092", "K3XjOv1FsKHXW6g6")
+holyrics = Holyrics("http://192.168.0.115:8094", "IwSRKBWVTWUVe6gu")
+youtube = None #YouTubeScheduler("C:\\Users\\admin\PycharmProjects\\streaming-scripts\\secrets\\youtube_secret.json")
 timeCodeWorker = TimeCodeWorker(holyrics, client)
+names = [
+    "Слово. Епископ Рувим Назарчук",
+    "Слово. Пастор Евгений Нагаев",
+    "Слово. Пастор Олег Гурный",
+    "Слово. Диакон Александр Павлов",
+    "Слово. Абрам Манукян",
+    "Слово. Роберт Тамоян",
+    "Слово. Пастор Вячеслав Назарчук",
+    "Слово. Пастор Павел Назарчук"
+]
 
-lamps.lamps[0] = WiredLamp(arduino, 0)  # WirelessLamp(["192.168.3.141"])
-lamps.lamps[1] = WirelessLamp("192.168.0.142")  # WirelessLamp("192.168.0.142")
-lamps.lamps[2] = WirelessLamp("192.168.0.143")  # WirelessLamp("192.168.0.143")
+lamps.lamps[0] = TallyLamp(tallySender, 3) #WiredLamp(arduino, 0)
+lamps.lamps[1] = TallyLamp(tallySender, 5)
+lamps.lamps[2] = TallyLamp(tallySender, 7)
 lamps.lamps[3] = WiredLamp(arduino, 3)
 lamps.lamps[4] = WirelessLamp("192.168.0.144")
 
@@ -105,7 +119,7 @@ def init_streamdeck():
 init_streamdeck()
 storage = Storage()
 timeCodeWorker.run()
-run_app(storage)
+run_app(storage, youtube, names)
 
 while True:
     sleep(1)        

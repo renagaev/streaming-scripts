@@ -26,7 +26,7 @@ class Holyrics:
             return None
 
         name = res["name"]
-        return re.sub("[\d\(\)«»]*", "", name).strip()
+        return re.sub("[\d\(\)«»\"]*", "", name).strip()
 
     def get_song_title(self, song_id):
         res = self.__request("GetLyrics", {"id": song_id})
@@ -34,6 +34,6 @@ class Holyrics:
 
 
 if __name__ == '__main__':
-    url = "http://192.168.1.107:8092"
-    ho = Holyrics(url, "K3XjOv1FsKHXW6g6")
-    ho.get_current_song_title()
+    url = "http://192.168.0.115:8094"
+    ho = Holyrics(url, "IwSRKBWVTWUVe6gu")
+    print(ho.get_current_song_title())

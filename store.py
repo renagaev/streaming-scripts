@@ -23,6 +23,7 @@ class ReactiveValue:
 class Store:
     def __init__(self):
         self.cam = ReactiveValue(-1)
+        self.waiting_cam = ReactiveValue(-1)
         self.words_showed = ReactiveValue(False)
         self.aten_cam = ReactiveValue(4)
 

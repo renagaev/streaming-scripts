@@ -22,6 +22,12 @@ class WirelessLamp(Lamp):
         self.state = "red_on"
         self.queue.put(self.state)
 
+    def on_green(self):
+        self.on()
+
+    def off_green(self):
+        self.off()
+
     def renew(self):
         while True:
             sleep(3)

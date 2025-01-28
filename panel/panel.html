@@ -21,9 +21,8 @@
             </div>
             <div style="width: 100%">
                 <v-combobox height="40px" class="ma-0 pa-0" solo density="compact" :items="keyframe.candidates"
-                            :menu-props="{padding: '0px', density: 'compact'}"></v-combobox>
+                            :menu-props="{padding: '0px', density: 'compact'}" v-model="keyframe.note" @input="saveNote(keyframe)"></v-combobox>
             </div>
-            <button @click="saveNote(keyframe)">Save</button>
         </div>
     </div>
 </div>

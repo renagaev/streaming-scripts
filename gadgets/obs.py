@@ -57,7 +57,7 @@ class Obs:
 
     def get_transition_duration(self):
         res = self._call(requests.GetCurrentSceneTransition())
-        return res.getTransitionDuration()
+        return res.getTransitionDuration() or 0
 
     def is_streaming(self):
         return self._call(requests.GetStreamingStatus()).datain["recording"]

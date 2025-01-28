@@ -1,25 +1,37 @@
+from typing import List
+
 from flask import Flask, request, jsonify
 from datetime import datetime
 from flask_cors import CORS
 from services.Storage import Storage, Record
 from flask_socketio import SocketIO, emit
 
+from services.yotube import YouTubeScheduler
+
 
 class Endpoints:
-    def __init__(self, storage: Storage, socketio):
+    def __init__(self, storage: Storage, socketio, names: List[str], youtube: YouTubeScheduler):
+        self.names = names
+        self.youtube = youtube
         self.socketio = socketio
         self.storage = storage
 
+    def schedule_youtube(self):
+        title = request.form["title"]
+        start_at = request.form["startAt"]
+        thumbnail = request.files["thumbnail"]
+
+        self.youtube.schedule_live_stream(title, "", start_at, thumbnail)
+        return "ok"
+
     def get_formatted_keyframes(self):
         keyframes = self.storage.get_last_keyframes()
-        lst = []
+        lst = ["0:00:00 - ?"]
         for idx, item in enumerate(keyframes):
             item: Record = item
             txt = item.id
             if item.note:
                 txt = item.note
-            elif item.candidates:
-                txt = item.candidates[-1]
 
             lst.append(f"{str(item.elapsed)} - {txt}")
         newline = "\n"
@@ -49,7 +61,7 @@ class Endpoints:
 
         created = datetime.fromisoformat(json["created"])
         stream_started = datetime.fromisoformat(json["stream_started"])
-        record = self.storage.record_keyframe(created, stream_started)
+        record = self.storage.record_keyframe(created, stream_started, self.names)
         self.socketio.emit("new-keyframe", self.to_dict(record))
         return "ok"
 
@@ -61,21 +73,24 @@ class Endpoints:
         return "ok"
 
 
-def run_app(storage: Storage):
+def run_app(storage: Storage, youtube: YouTubeScheduler, names: List[str]):
     app = Flask(__name__)
     CORS(app)
     socketio = SocketIO()
     socketio.init_app(app, cors_allowed_origins="*")
 
-    endpoints = Endpoints(storage, socketio)
+    endpoints = Endpoints(storage, socketio, names, youtube)
     app.add_url_rule("/formatted-keyframes", view_func=endpoints.get_formatted_keyframes)
     app.add_url_rule("/keyframes", view_func=endpoints.get_keyframes)
     app.add_url_rule("/keyframe", view_func=endpoints.record_keyframe, methods=["POST"])
     app.add_url_rule("/text", view_func=endpoints.set_text, methods=["POST"])
     app.add_url_rule("/update-note", view_func=endpoints.update_note, methods=["POST"])
 
+    app.add_url_rule("/schedule-youtube", view_func=endpoints.schedule_youtube, methods=["POST"])
+
     socketio.run(app, "localhost", 8080, allow_unsafe_werkzeug=True)
 
 
 if __name__ == '__main__':
-    run_app(Storage())
+    youtube = YouTubeScheduler("C:\\Users\\admin\PycharmProjects\\streaming-scripts\\secrets\\youtube_secret.json")
+    run_app(Storage(), youtube)

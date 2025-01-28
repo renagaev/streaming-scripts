@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>OBS YouTube Scheduler</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: #333;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background-color: #3a393a;
+            border: 1px solid #444;
+            border-radius: 5px;
+            padding: 15px;
+            width: 450px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+        }
+
+        .header {
+            font-size: 1.1em;
+            font-weight: bold;
+            background-color: #2b2b2b;
+            padding: 8px 10px;
+            border: 1px solid #555;
+            margin-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 0.9em;
+        }
+
+        input[type="text"], input[type="file"] {
+            width: 100%;
+            padding: 6px 8px;
+            font-size: 0.95em;
+            color: #ccc;
+            background-color: #232323;
+            border: 1px solid #555;
+            border-radius: 3px;
+        }
+
+        input[type="text"]:focus, input[type="file"]:focus {
+            outline: none;
+            border-color: #84162d;
+            box-shadow: 0 0 3px #84162d;
+        }
+
+        button {
+            background-color: #84162d;
+            color: #ffffff;
+            font-weight: bold;
+            padding: 8px;
+            border: none;
+            border-radius: 3px;
+            width: 100%;
+            cursor: pointer;
+            font-size: 1em;
+            text-transform: uppercase;
+        }
+
+        button:hover {
+            background-color: #a41c37;
+        }
+
+        .divider {
+            border-top: 1px solid #555;
+            margin: 15px 0;
+        }
+
+        .file-path {
+            display: inline-block;
+            margin-top: 5px;
+            font-size: 0.8em;
+            color: #aaa;
+        }
+
+        .error-message {
+            color: #ff5555;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+            font-weight: bold;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <div class="container">
+        <div class="header">Настройки трансляции</div>
+        <div class="form-group">
+            <label for="title">Название трансляции</label>
+            <input type="text" id="title" v-model="title" placeholder="Введите название">
+        </div>
+        <div class="form-group">
+            <label for="start-time">Время старта (HH:mm)</label>
+            <input type="text" id="start-time" v-model="startTime" placeholder="11:00">
+        </div>
+        <div class="form-group">
+            <label for="thumbnail">Выберите файл изображения</label>
+            <input type="file" id="thumbnail" @change="handleFileUpload">
+            <span class="file-path" v-if="thumbnail">{{ thumbnail.name }}</span>
+        </div>
+        <div class="divider"></div>
+        <div class="error-message" v-if="errorMessage">{{ errorMessage }}</div>
+        <button @click="scheduleBroadcast">Запланировать</button>
+    </div>
+</div>
+<script>
+    const { createApp } = Vue;
+
+    createApp({
+        data() {
+            return {
+                title: '',
+                startTime: '11:00',
+                thumbnail: null,
+                errorMessage: ''
+            };
+        },
+        methods: {
+            handleFileUpload(event) {
+                this.thumbnail = event.target.files[0];
+            },
+            scheduleBroadcast() {
+                this.errorMessage = '';
+
+                if (!this.title || !this.startTime || !this.thumbnail) {
+                    this.errorMessage = "Все поля обязательны для заполнения.";
+                    return;
+                }
+
+                const today = new Date();
+                const [hours, minutes] = this.startTime.split(":");
+                today.setHours(parseInt(hours));
+                today.setMinutes(parseInt(minutes));
+                today.setSeconds(0);
+
+                const isoTime = today.toISOString();
+
+                const formData = new FormData();
+                formData.append("title", this.title);
+                formData.append("startAt", isoTime);
+                formData.append("thumbnail", this.thumbnail);
+
+                fetch("http://localhost:8080/schedule-youtube", {
+                    method: "POST",
+                    body: formData
+                })
+                .then((response) => {
+                    if (response.ok) {
+                        this.errorMessage = "Трансляция успешно запланирована!";
+                    } else {
+                        this.errorMessage = "Ошибка при планировании трансляции.";
+                    }
+                })
+                .catch((error) => {
+                    console.error("Ошибка:", error);
+                    this.errorMessage = "Ошибка при подключении к серверу.";
+                });
+            },
+        },
+    }).mount("#app");
+</script>
+</body>
+</html>

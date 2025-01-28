@@ -13,3 +13,9 @@ class WiredLamp(Lamp):
 
     def off(self):
         self.arduino.off(self.index+3)
+
+    def on_green(self):
+        self.on()
+
+    def off_green(self):
+        self.off()

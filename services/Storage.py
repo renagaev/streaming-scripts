@@ -1,15 +1,13 @@
 import sqlite3
 from datetime import datetime, timedelta
-from typing import Iterable
+from typing import Iterable, List
 from tinydb import TinyDB, Query, JSONStorage
 from tinydb_serialization import SerializationMiddleware
 from tinydb_serialization.serializers import DateTimeSerializer
 
 
-
-
 class Record:
-    def __init__(self, id: int, created: datetime, stream_started: datetime, note: str, candidates):
+    def __init__(self, id: int, created: datetime, stream_started: datetime, note: str, candidates: List[str]):
         self.note = note
         self.stream_started = stream_started
         self.created = created
@@ -19,7 +17,8 @@ class Record:
 
     @classmethod
     def from_document(i, document):
-        return Record(document.doc_id, document["created"], document["stream_start"], document["text"], document  ["candidates"])
+        return Record(document.doc_id, document["created"], document["stream_start"], document["text"],
+                      document["candidates"])
 
 
 class Storage:
@@ -30,11 +29,11 @@ class Storage:
         self.db = TinyDB("db.json", storage=serialization)
         self.keyframes = self.db.table("keyframes")
 
-    def record_keyframe(self, created, stream_started):
+    def record_keyframe(self, created: str, stream_started, candidates: List[str]):
         keyframe_id = self.keyframes.insert({"created": created,
                                              "stream_start": stream_started,
                                              "text": None,
-                                             "candidates": []})
+                                             "candidates": candidates})
         return Record.from_document(self.keyframes.get(doc_id=keyframe_id))
 
     def record_text(self, created: datetime, text):
@@ -53,7 +52,6 @@ class Storage:
         return [Record.from_document(i) for i in keyframes]
 
     def update_note(self, keyframe_id, note):
-        q = Query()
         keyframe = self.keyframes.get(doc_id=keyframe_id)
         keyframe["text"] = note
         self.keyframes.upsert(keyframe)

@@ -60,12 +60,12 @@ def fade(spaces):
     field_filter = obs.obs_source_get_filter_by_name(source, "transparency")
     for i in spaces:
         field_filter_settings = obs.obs_data_create()
-        obs.obs_data_set_int(field_filter_settings, "opacity", int(i))
+        obs.obs_data_set_double(field_filter_settings, "opacity", i/100)
         obs.obs_source_update(field_filter, field_filter_settings)
         obs.obs_data_release(field_filter_settings)
 
         blur_filter_settings = obs.obs_data_create()
-        obs.obs_data_set_int(blur_filter_settings, "Filter.Blur.Size", int(i * 0.75))
+        obs.obs_data_set_int(blur_filter_settings, "Filter.Blur.Size", int(i * 0.3))
         obs.obs_source_update(blur_filter, blur_filter_settings)
         obs.obs_data_release(blur_filter_settings)
 

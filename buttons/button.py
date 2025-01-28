@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from PIL import Image, ImageDraw, ImageFont, ImageOps
+from PIL import Image, ImageDraw, ImageFont, ImageOps, ImageColor
 import os
 
 
