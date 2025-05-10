@@ -59,6 +59,9 @@ class Storage:
         keyframe["text"] = note
         self.keyframes.upsert(keyframe)
 
+    def remove_keyframe(self, keyframe_id):
+        self.keyframes.remove(doc_ids=[int(keyframe_id)])
+
 
 if __name__ == '__main__':
     from time import sleep

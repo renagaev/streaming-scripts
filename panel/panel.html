@@ -4,82 +4,101 @@
     <meta charset="UTF-8"/>
     <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Vue Standalone Demo</title>
+    <title>Vue Standalone Demo – Keyframe Editor</title>
+
+    <!-- Vue & Vuetify -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"
             integrity="sha384-c79GN5VsunZvi+Q/WObgk2in0CbZsHnjEqvFxC5DxHn9lTfNce2WW6h2pH6u/kF+"
             crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/vuetify@3.3.6/dist/vuetify.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vuetify@3.3.6/dist/vuetify.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.x/css/materialdesignicons.min.css" rel="stylesheet"/>
 </head>
 <body>
 <div id="app">
     <div>
-        <div v-for="keyframe in keyframes" class="container">
-            <div class="timecode">
-                {{ keyframe.elapsed }}
+        <div v-for="keyframe in keyframes" :key="keyframe.id" class="container">
+            <div class="timecode">{{ keyframe.elapsed }}</div>
+
+            <div class="flex-1">
+                <v-combobox height="40px" class="ma-0 pa-0" solo density="compact"
+                            :items="keyframe.candidates"
+                            :menu-props="{ padding: '0px', density: 'compact' }"
+                            v-model="keyframe.note"
+                            @update:model-value="saveNote(keyframe)">
+                </v-combobox>
             </div>
-            <div style="width: 100%">
-                <v-combobox height="40px" class="ma-0 pa-0" solo density="compact" :items="keyframe.candidates"
-                            :menu-props="{padding: '0px', density: 'compact'}" v-model="keyframe.note" @update:model-value="saveNote(keyframe)"></v-combobox>
-            </div>
+            <v-btn icon density="compact" color="red-darken-2" @click="removeKeyframe(keyframe)" class="delete-btn">
+                <v-icon icon="mdi-delete"></v-icon>
+            </v-btn>
         </div>
     </div>
 </div>
+
 <script>
-    const {createApp} = Vue
-    const {createVuetify} = Vuetify
+    const {createApp} = Vue;
+    const {createVuetify} = Vuetify;
 
-    const vuetify = createVuetify()
+    const vuetify = createVuetify();
 
-
-    app = createApp({
-        components: {},
+    const app = createApp({
         data() {
             return {
-                message: 'Hello Vue!',
-
-                keyframes: []
-            }
+                keyframes: [{
+                    "id": 1,
+                    "text": 1
+                }]
+            };
         },
         methods: {
             loadKeyframes() {
                 fetch("http://localhost:8080/keyframes")
                     .then(res => res.json())
-                    .then(obj => this.keyframes = obj)
+                    .then(obj => this.keyframes = obj);
             },
             saveNote(keyframe) {
                 fetch("http://localhost:8080/update-note?" + new URLSearchParams({
-                    "id": keyframe.id,
-                    "note": keyframe.note
-                }), {method: "POST"})
+                    id: keyframe.id,
+                    note: keyframe.note
+                }), {method: "POST"});
             },
-            addKeyframe(keyframe) {
-                this.keyframes.push(keyframe)
+            removeKeyframe(keyframe) {
+                // Удаляем на сервере
+                fetch("http://localhost:8080/keyframe?" + new URLSearchParams({
+                    id: keyframe.id
+                }), {method: "DELETE"})
+                    .then(() => {
+                        // Удаляем локально после успешного ответа
+                        this.keyframes = this.keyframes.filter(k => k.id !== keyframe.id);
+                    });
+            },
+            addKeyframe(record) {
+                this.keyframes.push(record);
             },
             addCandidate(id, text) {
-                const keyframe = this.keyframes.find(x => x.id === id)
-                keyframe.candidates.push(text)
+                const keyframe = this.keyframes.find(x => x.id === id);
+                if (keyframe) keyframe.candidates.push(text);
             }
         },
         created() {
-            this.loadKeyframes()
-        },
-    }).use(vuetify).mount('#app')
+            this.loadKeyframes();
+        }
+    }).use(vuetify).mount('#app');
 
-    io = io("http://localhost:8080");
-    io.on("new-keyframe", (record) => {
-        app.addKeyframe(record)
-    })
-    io.on("new-candidate", (id, text) => {
-        app.addCandidate(id, text)
-    })
+    const socket = io("http://localhost:8080");
+    socket.on("new-keyframe", (record) => {
+        app.addKeyframe(record);
+    });
+    socket.on("new-candidate", (id, text) => {
+        app.addCandidate(id, text);
+    });
 </script>
-</body>
+
 <style>
     :root {
         --main-color: #fff;
-        --element-radius: 1em;
+        /*--element-radius: 1em;*/
         --obs-background: #3a393a;
         --obs-button-background: #4c4c4c;
         --obs-button-border: #233166;
@@ -89,6 +108,7 @@
         --vs-line-height: 1.5;
     }
 
+    /* Vuetify overrides */
     .v-input__details {
         display: none;
     }
@@ -103,7 +123,7 @@
     }
 
     .v-list__tile {
-        padding: 0
+        padding: 0;
     }
 
     body {
@@ -111,19 +131,16 @@
         margin: 0;
         background-color: var(--obs-background);
         font-family: "Roboto";
+        color: var(--main-color);
     }
 
-    .v-field {
+    .v-field, .v-list-item-title {
         font-size: 14px;
     }
-
-    .v-list-item-title {
-        font-size: 14px;
-    }
-
 
     .container {
         display: flex;
+        align-items: center;
         gap: 10px;
         margin: 10px;
     }
@@ -132,37 +149,21 @@
         padding: 0.5rem;
     }
 
-    .text-input {
-        /*box-sizing: border-box;*/
-        padding: .5em;
-        /*margin: 0 0 1em;*/
-        border: none;
-        width: 100%;
+    .flex-1 {
+        flex: 1 1 0%;
     }
 
-    button {
-        background: var(--obs-button-background);
-        border: 0px solid var(--obs-button-border);
-        color: var(--obs-button-color);
-        padding: .5em;
-        border-radius: 3px;
-        text-align: center;
+    .delete-btn {
+        min-width: 32px;
     }
 
-    button:hover {
-        background: #7a797a;
-    }
-
-    #app {
-        color: var(--main-color);
-    }
-
-    .v-input {
-        font-size: 10px;
-    }
-
+    /* Vue Select theme tweaks */
     .vs__selected {
-        color: var(--main-color);
+        display: block;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        max-width: 100%;
+        overflow: hidden;
     }
 
     .vs__dropdown-toggle {
@@ -180,18 +181,6 @@
         text-transform: lowercase;
         font-variant: small-caps;
     }
-
-    .vs__selected-options {
-        flex-wrap: nowrap;
-        max-width: calc(100% - 25px); /* change this to `- 40px` if you're supporting a `clearable` field; I was not */
-    }
-
-    .vs__selected {
-        display: block;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        max-width: 100%;
-        overflow: hidden;
-    }
 </style>
+</body>
 </html>
