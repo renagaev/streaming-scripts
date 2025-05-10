@@ -4,7 +4,7 @@
     <meta charset="UTF-8"/>
     <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Vue Standalone Demo – Keyframe Editor</title>
+    <title>Vue Standalone Demo – Keyframe & Broadcast Manager (OBS Style)</title>
 
     <!-- Vue & Vuetify -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -13,174 +13,247 @@
             crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/vuetify@3.3.6/dist/vuetify.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vuetify@3.3.6/dist/vuetify.min.css">
+    <!-- Material Design Icons -->
     <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.x/css/materialdesignicons.min.css" rel="stylesheet"/>
 </head>
 <body>
 <div id="app">
-    <div>
-        <div v-for="keyframe in keyframes" :key="keyframe.id" class="container">
-            <div class="timecode">{{ keyframe.elapsed }}</div>
+  <v-app>
+    <v-snackbar v-model="snackbar" :timeout="3000" elevation="2" color="secondary">
+      {{ snackbarMessage }}
+    </v-snackbar>
 
-            <div class="flex-1">
-                <v-combobox height="40px" class="ma-0 pa-0" solo density="compact"
-                            :items="keyframe.candidates"
-                            :menu-props="{ padding: '0px', density: 'compact' }"
-                            v-model="keyframe.note"
-                            @update:model-value="saveNote(keyframe)">
-                </v-combobox>
-            </div>
-            <v-btn icon density="compact" color="red-darken-2" @click="removeKeyframe(keyframe)" class="delete-btn">
+    <v-main>
+      <v-container fluid class="pa-0">
+        <v-tabs v-model="tab" grow compact>
+          <v-tab value="keyframes">Кейфреймы</v-tab>
+          <v-tab value="broadcast">Трансляция</v-tab>
+        </v-tabs>
+
+        <v-window v-model="tab" class="pa-0">
+          <v-window-item value="keyframes">
+            <div v-for="keyframe in keyframes" :key="keyframe.id" class="container">
+              <div class="timecode">{{ keyframe.elapsed }}</div>
+              <v-combobox height="40px" class="ma-0 pa-0 flex-1" solo density="compact"
+                          :items="keyframe.candidates"
+                          :menu-props="{ padding: '0px', density: 'compact' }"
+                          v-model="keyframe.note"
+                          @update:model-value="saveNote(keyframe)">
+              </v-combobox>
+              <v-btn icon density="compact" class="obs-btn delete-btn" @click="removeKeyframe(keyframe)">
                 <v-icon icon="mdi-delete"></v-icon>
-            </v-btn>
-        </div>
-    </div>
+              </v-btn>
+            </div>
+          </v-window-item>
+
+          <v-window-item value="broadcast">
+            <v-card flat class="broadcast-card">
+              <v-card-text class="d-flex flex-column gap-4">
+                <v-text-field label="Название трансляции" v-model="broadcastTitle" density="compact" solo></v-text-field>
+                <v-textarea label="Описание трансляции" v-model="broadcastDescription" density="compact" solo auto-grow></v-textarea>
+                <v-text-field label="Время начала (HH:mm)" v-model="broadcastTime" density="compact" solo placeholder="19:30" maxlength="5"></v-text-field>
+                <v-btn class="obs-btn" :loading="loading" :disabled="loading" @click="scheduleBroadcast">
+                  Запланировать
+                </v-btn>
+              </v-card-text>
+            </v-card>
+          </v-window-item>
+        </v-window>
+      </v-container>
+    </v-main>
+  </v-app>
 </div>
 
 <script>
-    const {createApp} = Vue;
-    const {createVuetify} = Vuetify;
+// Кастомный debounce без внешних библиотек
+function debounce(func, wait) {
+  let timeout;
+  return function(...args) {
+    const context = this;
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(context, args), wait);
+  };
+}
 
-    const vuetify = createVuetify();
+const DEFAULT_BROADCAST_DESCRIPTION = `Сбербанк: 4276 6100 1282 2370
 
-    const app = createApp({
-        data() {
-            return {
-                keyframes: [{
-                    "id": 1,
-                    "text": 1
-                }]
-            };
-        },
-        methods: {
-            loadKeyframes() {
-                fetch("http://localhost:8080/keyframes")
-                    .then(res => res.json())
-                    .then(obj => this.keyframes = obj);
-            },
-            saveNote(keyframe) {
-                fetch("http://localhost:8080/update-note?" + new URLSearchParams({
-                    id: keyframe.id,
-                    note: keyframe.note
-                }), {method: "POST"});
-            },
-            removeKeyframe(keyframe) {
-                // Удаляем на сервере
-                fetch("http://localhost:8080/keyframe?" + new URLSearchParams({
-                    id: keyframe.id
-                }), {method: "DELETE"})
-                    .then(() => {
-                        // Удаляем локально после успешного ответа
-                        this.keyframes = this.keyframes.filter(k => k.id !== keyframe.id);
-                    });
-            },
-            addKeyframe(record) {
-                this.keyframes.push(record);
-            },
-            addCandidate(id, text) {
-                const keyframe = this.keyframes.find(x => x.id === id);
-                if (keyframe) keyframe.candidates.push(text);
-            }
-        },
-        created() {
-            this.loadKeyframes();
+Если Вам нужно Евангелие - мы вышлем Вам! Пишите, звоните
+
+Тамбовская местная религиозная организация Евангельских Христиан Миссия благотворительности и милосердия "Русь Христианская"
+ОГРН 1026800004516
+ИНН 6832037860
+Контакты: +79610377755
+Сайт Церкви - https://russia-church.com
+Тамбовская Церковь ВКонтакте - https://vk.com/tambov.church
+Тамбовская Церковь в Instagram - https://instagram.com/tambov.church
+Почта - reuben@mail.ru`;
+
+function getDefaultBroadcastTitle() {
+  const today = new Date();
+  const dd = String(today.getDate()).padStart(2, '0');
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const yyyy = today.getFullYear();
+  return `Служение ${dd}.${mm}.${yyyy} | Тамбовская церковь | Прямая трансляция🔴`;
+}
+
+const { createApp } = Vue;
+const { createVuetify } = Vuetify;
+
+const vuetify = createVuetify({
+  theme: {
+    defaultTheme: 'obsDark',
+    themes: {
+      obsDark: {
+        dark: true,
+        colors: {
+          background: '#3a393a',
+          surface: '#4c4c4c',
+          primary: '#4c4c4c',
+          secondary: '#233166',
+          error: '#84162d',
+          success: '#581624',
         }
-    }).use(vuetify).mount('#app');
+      }
+    }
+  }
+});
 
-    const socket = io("http://localhost:8080");
-    socket.on("new-keyframe", (record) => {
-        app.addKeyframe(record);
-    });
-    socket.on("new-candidate", (id, text) => {
-        app.addCandidate(id, text);
-    });
+const app = createApp({
+  data() {
+    return {
+      tab: 'keyframes',
+      keyframes: [{"text": "11", "id":2, "elapsed":"00:00"}],
+      broadcastTitle: '',
+      broadcastDescription: '',
+      broadcastTime: '',
+      loading: false,
+      snackbar: false,
+      snackbarMessage: ''
+    };
+  },
+  methods: {
+    async loadKeyframes() {
+      const res = await fetch("http://localhost:8080/keyframes");
+      this.keyframes = await res.json();
+    },
+    saveNote(keyframe) {
+      this.debouncedSave(keyframe);
+    },
+    async saveNoteImmediate(keyframe) {
+      try {
+        await fetch("http://localhost:8080/update-note?" + new URLSearchParams({ id: keyframe.id, note: keyframe.note }), { method: "POST" });
+      } catch (e) {
+        console.error('Save note failed', e);
+      }
+    },
+    removeKeyframe(keyframe) {
+      fetch("http://localhost:8080/keyframe?" + new URLSearchParams({ id: keyframe.id }), { method: "DELETE" })
+        .then(() => this.keyframes = this.keyframes.filter(k => k.id !== keyframe.id));
+    },
+    addKeyframe(record) { this.keyframes.push(record); },
+    addCandidate(id, text) {
+      const keyframe = this.keyframes.find(x => x.id === id);
+      if (keyframe) keyframe.candidates.push(text);
+    },
+    scheduleBroadcast() {
+      if (!this.broadcastTitle || !this.broadcastTime) return;
+      this.loading = true;
+      fetch("http://localhost:8080/schedule?" + new URLSearchParams({ title: this.broadcastTitle, description: this.broadcastDescription, start_time: this.broadcastTime }), { method: "POST" })
+        .then(() => { this.loading = false; this.snackbarMessage = 'Трансляция успешно запланирована'; this.snackbar = true; this.setDefaults(); })
+        .catch(() => { this.loading = false; this.snackbarMessage = 'Ошибка при планировании'; this.snackbar = true; });
+    },
+    setDefaults() { this.broadcastTitle = getDefaultBroadcastTitle(); this.broadcastDescription = DEFAULT_BROADCAST_DESCRIPTION; this.broadcastTime = ''; }
+  },
+  created() {
+    this.debouncedSave = debounce(this.saveNoteImmediate.bind(this), 500);
+    this.setDefaults();
+    this.loadKeyframes();
+  }
+}).use(vuetify).mount('#app');
+
+const socket = io("http://localhost:8080");
+socket.on("new-keyframe", record => app.addKeyframe(record));
+socket.on("new-candidate", (id, text) => app.addCandidate(id, text));
 </script>
 
 <style>
-    :root {
-        --main-color: #fff;
-        /*--element-radius: 1em;*/
-        --obs-background: #3a393a;
-        --obs-button-background: #4c4c4c;
-        --obs-button-border: #233166;
-        --obs-button-hover-background: #581624;
-        --obs-button-hover-border: #84162d;
-        --obs-button-color: #fff;
-        --vs-line-height: 1.5;
-    }
-
-    /* Vuetify overrides */
-    .v-input__details {
-        display: none;
-    }
-
-    .v-list-item--density-default.v-list-item--one-line {
-        padding: 0;
-        min-height: 10px;
-    }
-
-    .v-list {
-        padding: 0;
-    }
-
-    .v-list__tile {
-        padding: 0;
-    }
-
-    body {
-        font-size: 14px;
-        margin: 0;
-        background-color: var(--obs-background);
-        font-family: "Roboto";
-        color: var(--main-color);
-    }
-
-    .v-field, .v-list-item-title {
-        font-size: 14px;
-    }
-
-    .container {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin: 10px;
-    }
-
-    .timecode {
-        padding: 0.5rem;
-    }
-
-    .flex-1 {
-        flex: 1 1 0%;
-    }
-
-    .delete-btn {
-        min-width: 32px;
-    }
-
-    /* Vue Select theme tweaks */
-    .vs__selected {
-        display: block;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        max-width: 100%;
-        overflow: hidden;
-    }
-
-    .vs__dropdown-toggle {
-        background: #1f1e1f;
-    }
-
-    .vs__dropdown-option--highlight {
-        background: #1f1e1f;
-    }
-
-    .vs__dropdown-menu {
-        background: #7a797a;
-        border: none;
-        color: var(--main-color);
-        text-transform: lowercase;
-        font-variant: small-caps;
-    }
+:root {
+  --main-color: #ffffff;
+  --obs-background: #3a393a;
+  --obs-button-background: #4c4c4c;
+  --obs-button-border: #233166;
+  --obs-button-hover-background: #581624;
+  --obs-button-hover-border: #84162d;
+  --obs-button-color: #ffffff;
+}
+body {
+  margin: 0;
+  background-color: var(--obs-background);
+  font-family: "Roboto", sans-serif;
+  color: var(--main-color);
+}
+.v-app {
+  background: var(--obs-background);
+}
+.v-tabs {
+  background: var(--obs-button-background) !important;
+}
+.v-tab {
+  color: var(--obs-button-color) !important;
+  text-transform: none;
+}
+.v-tab--selected {
+  background: var(--obs-button-hover-background) !important;
+}
+.obs-btn {
+  background: var(--obs-button-background) !important;
+  border: 1px solid var(--obs-button-border) !important;
+  color: var(--obs-button-color) !important;
+  text-transform: none;
+}
+.obs-btn:hover {
+  background: var(--obs-button-hover-background) !important;
+  border-color: var(--obs-button-hover-border) !important;
+}
+.v-card,
+.v-window-item,
+.v-sheet,
+.v-list {
+  background-color: var(--obs-background) !important;
+}
+.v-field--variant-solo .v-field__overlay {
+  background-color: #1f1e1f !important;
+  border: 1px solid var(--obs-button-border) !important;
+}
+.v-field__input,
+.v-label,
+.v-select__selection {
+  color: var(--main-color) !important;
+}
+.container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px;
+}
+.timecode {
+  width: 60px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 10px;
+}
+.container .v-combobox {
+  align-self: center;
+  /* ensure the combobox wrapper is vertically centered */
+}
+.delete-btn {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 </style>
 </body>
 </html>
