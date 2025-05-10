@@ -29,12 +29,3 @@ class TallySender:
             self.firmata.digital_ports[0].write()
             sleep(0.05)
 
-if __name__ == '__main__':
-    sender = TallySender()
-
-    sender.firmata.digital_ports[1].pins[3].write(True)
-    while True:
-        try:
-            sleep(1)
-        except:
-            break

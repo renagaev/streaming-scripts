@@ -1,29 +1,125 @@
-from statistics import median
+from __future__ import annotations
+
+import io
+import os
+import pickle
+from datetime import datetime
+from typing import Optional
 
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.http import MediaIoBaseUpload
-import os
-import pickle
 
 
 class YouTubeScheduler:
-    SCOPES = ["https://www.googleapis.com/auth/youtube.force-ssl"]
+    """
+    Упрощённый, но полностью рабочий класс для:
+      • создания запланированной прямой трансляции с обложкой;
+      • отправки сообщений в её чат.
 
-    def __init__(self, client_secrets_path):
+    Требования:
+      • Включён YouTube Data API v3 на вашем проекте GCP;
+      • Учётная запись в «творческой студии» подтверждена для прямых эфиров.
+    """
+
+    SCOPES: list[str] = ["https://www.googleapis.com/auth/youtube.force-ssl"]
+
+    def __init__(
+        self,
+        client_secrets_path: str,
+        token_path: str = "token.pickle",
+    ) -> None:
         self.client_secrets_path = client_secrets_path
-        self.youtube = self.authenticate_youtube()
+        self.token_path = token_path
+        self.youtube = self._authorize()
 
-    def ensure_initialized(self):
-        if self.youtube is not None:
-            return
+    # ---------- Публичные методы ----------
+
+    def create_broadcast(
+        self,
+        title: str,
+        description: str,
+        start_time_iso8601: str,
+        thumbnail_bytes: Optional[bytes] = None,
+    ) -> str:
+        """
+        Создаёт трансляцию и (опционально) загружает обложку.
+
+        Args:
+            title:        Заголовок трансляции.
+            description:  Описание для зрителей.
+            start_time_iso8601: Время начала (формат «YYYY‑MM‑DDTHH:MM:SSZ»).
+            thumbnail_bytes:    JPEG‑обложка в виде массива байт.
+
+        Returns:
+            broadcast_id: ID созданной трансляции.
+        """
+        request_body = {
+            "snippet": {
+                "title": title,
+                "description": description,
+                "scheduledStartTime": start_time_iso8601,
+            },
+            "status": {"privacyStatus": "private"},
+            "contentDetails": {
+                "enableAutoStart": True,
+                "enableAutoStop": True,
+            },
+        }
+
+        try:
+            response = (
+                self.youtube.liveBroadcasts()
+                .insert(part="snippet,status,contentDetails", body=request_body)
+                .execute()
+            )
+            broadcast_id: str = response["id"]
+            print(f"✓ Трансляция создана (ID = {broadcast_id})")
+
+            if thumbnail_bytes:
+                self._upload_thumbnail(broadcast_id, thumbnail_bytes)
+
+            return broadcast_id
+
+        except HttpError as exc:
+            raise RuntimeError(f"Ошибка YouTube API при создании трансляции: {exc}") from exc
+
+    def send_live_chat_message(self, broadcast_id: str, text: str) -> None:
+        """
+        Отправляет текстовое сообщение в чат указанной трансляции.
+
+        Args:
+            broadcast_id: ID трансляции.
+            text:         Текст сообщения.
+        """
+        live_chat_id = self._get_live_chat_id(broadcast_id)
+        if not live_chat_id:
+            raise RuntimeError("Не удалось получить liveChatId для заданной трансляции")
+
+        body = {
+            "snippet": {
+                "liveChatId": live_chat_id,
+                "type": "textMessageEvent",
+                "textMessageDetails": {"messageText": text},
+            }
+        }
+
+        try:
+            self.youtube.liveChatMessages().insert(part="snippet", body=body).execute()
+            print("✓ Сообщение отправлено в чат")
+        except HttpError as exc:
+            raise RuntimeError(f"Ошибка YouTube API при отправке сообщения: {exc}") from exc
+
+    # ---------- Приватные методы ----------
+
+    def _authorize(self):
         creds = None
-        if os.path.exists("token.pickle"):
-            with open("token.pickle", "rb") as token:
-                creds = pickle.load(token)
-        # Если токены недействительны, выполняем вход
+        if os.path.exists(self.token_path):
+            with open(self.token_path, "rb") as token_file:
+                creds = pickle.load(token_file)
+
         if not creds or not creds.valid:
             if creds and creds.expired and creds.refresh_token:
                 creds.refresh(Request())
@@ -32,93 +128,67 @@ class YouTubeScheduler:
                     self.client_secrets_path, self.SCOPES
                 )
                 creds = flow.run_local_server(port=0)
-            # Сохраняем токены для последующего использования
-            with open("token.pickle", "wb") as token:
-                pickle.dump(creds, token)
-        self.youtube = build("youtube", "v3", credentials=creds)
+            with open(self.token_path, "wb") as token_file:
+                pickle.dump(creds, token_file)
 
-    def schedule_live_stream(self, title, description, start_time, thumbnail_body=None):
-        self.ensure_initialized()
+        return build("youtube", "v3", credentials=creds, cache_discovery=False)
+
+    def _upload_thumbnail(self, video_id: str, thumbnail_bytes: bytes) -> None:
+        """
+        Загружает JPEG‑обложку, переданную массивом байт.
+        """
+        media = MediaIoBaseUpload(io.BytesIO(thumbnail_bytes), mimetype="image/jpeg")
         try:
-            request_body = {
-                "snippet": {
-                    "title": title,
-                    "description": description,
-                    "scheduledStartTime": start_time
-                },
-                "status": {
-                    "privacyStatus": "private"
-                },
-                "contentDetails": {
-                    "enableAutoStart": True,
-                    "enableAutoStop": True
-                }
-            }
+            self.youtube.thumbnails().set(videoId=video_id, media_body=media).execute()
+            print("✓ Обложка успешно загружена")
+        except HttpError as exc:
+            raise RuntimeError(f"Ошибка загрузки обложки: {exc}") from exc
 
-            response = self.youtube.liveBroadcasts().insert(
-                part="snippet,status,contentDetails",
-                body=request_body
-            ).execute()
-
-            print("Трансляция успешно запланирована:")
-            print(f"Название: {response['snippet']['title']}")
-            print(f"ID трансляции: {response['id']}")
-
-            # Если указан путь к изображению, загружаем превью
-            if thumbnail_body:
-                self.upload_thumbnail(response['id'], thumbnail_body)
-
-        except HttpError as e:
-            print(f"Произошла ошибка: {e}")
-
-    def upload_thumbnail(self, video_id, thumbnail_body):
+    def _get_live_chat_id(self, broadcast_id: str) -> Optional[str]:
+        """
+        Возвращает liveChatId для указанной трансляции.
+        """
         try:
-            media = MediaIoBaseUpload(thumbnail_body, "image/jpeg")
-            self.youtube.thumbnails().set(
-                videoId=video_id,
-                media_body=media
-            ).execute()
-            print("Превью успешно загружено.")
-        except HttpError as e:
-            print(f"Ошибка при загрузке превью: {e}")
-
-    def get_scheduled_broadcasts(self):
-        try:
-            response = self.youtube.liveBroadcasts().list(
-                part="snippet,status",
-                broadcastStatus="upcoming"
-            ).execute()
-
-            broadcasts = response.get("items", [])
-            if not broadcasts:
-                print("Нет запланированных трансляций.")
+            resp = (
+                self.youtube.liveBroadcasts()
+                .list(part="snippet", id=broadcast_id)
+                .execute()
+            )
+            items = resp.get("items", [])
+            if not items:
                 return None
-
-            for broadcast in broadcasts:
-                print(f"Трансляция ID: {broadcast['id']}")
-                print(f"Название: {broadcast['snippet']['title']}")
-                print(f"Статус: {broadcast['status']['lifeCycleStatus']}")
-
-            return broadcasts
-
-        except HttpError as e:
-            print(f"Произошла ошибка при получении списка трансляций: {e}")
-            return None
+            return items[0]["snippet"].get("liveChatId")
+        except HttpError as exc:
+            raise RuntimeError(f"Не удалось получить liveChatId: {exc}") from exc
 
 
+# ------------------------------ Пример использования ------------------------------
 if __name__ == "__main__":
-    # Укажите путь к client_secrets.json
-    client_secrets_path = "C:\\Users\\admin\PycharmProjects\\streaming-scripts\\secrets\\youtube_secret.json"
+    # Путь к файлу OAuth 2.0 client_secrets.json (скачайте из Google Cloud Console).
+    CLIENT_SECRETS_PATH = "C:\\Users\\admin\\PycharmProjects\\streaming-scripts\\secrets\\youtube_secret.json"
 
-    # Создаем экземпляр класса YouTubeScheduler
-    scheduler = YouTubeScheduler(client_secrets_path)
+    # Инициализируем планировщик
+    yt = YouTubeScheduler(CLIENT_SECRETS_PATH)
 
-    # Параметры трансляции
-    title = "Моя прямая трансляция"
-    description = "Это описание моей прямой трансляции."
-    start_time = "2024-12-12T12:00:00Z"  # Время начала в формате ISO 8601
-    end_time = "2024-12-12T14:00:00Z"  # Время окончания в формате ISO 8601
-    thumbnail_path = "path/to/your/thumbnail.jpg"  # Укажите путь к файлу превью
+    # Настроим параметры прямого эфира
+    TITLE = "Моя демонстрационная прямая трансляция"
+    DESCRIPTION = "Эта трансляция создана через YouTube Data API."
+    # Текущее время + 1 час в ISO‑формате (UTC)
+    START_TIME = (
+        datetime.utcnow().replace(microsecond=0).isoformat(sep="T") + "Z"
+    )
 
-    # Планирование трансляции
-    scheduler.schedule_live_stream(title, description, start_time, end_time, thumbnail_path)
+    # Загружаем JPEG‑файл в память -> bytes
+    with open("thumbnail.png", "rb") as f:
+        THUMBNAIL_BYTES = f.read()
+
+    # Шаг 1. Создаём трансляцию
+    broadcast_id = yt.create_broadcast(
+        title=TITLE,
+        description=DESCRIPTION,
+        start_time_iso8601=START_TIME,
+        thumbnail_bytes=THUMBNAIL_BYTES,
+    )
+
+    # Шаг 2. Пишем приветствие в чат (можно вызвать позже, когда эфир начнётся)
+    yt.send_live_chat_message(broadcast_id, "Всем привет! 🎥")

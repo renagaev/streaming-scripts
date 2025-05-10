@@ -44,7 +44,7 @@ arduino = Arduino(dummy=True)
 tallySender = TallySender()
 deck = DeviceManager().enumerate()[0]
 roland = Roland(dummy=dummy)
-obs = Obs()
+obs = Obs(rtmp_config_path="C:\\Users\\admin\\AppData\\Roaming\\obs-studio\\basic\\profiles\\default\\obs-multi-rtmp.json")
 aten = Aten(dummy=True)
 main_screen = Screen()
 second_screen = Screen()
@@ -57,6 +57,7 @@ names = [
     "Слово. Пастор Евгений Нагаев",
     "Слово. Пастор Олег Гурный",
     "Слово. Диакон Александр Павлов",
+    "Слово. Диакон Ренато Молонгуа",
     "Слово. Абрам Манукян",
     "Слово. Роберт Тамоян",
     "Слово. Пастор Вячеслав Назарчук",

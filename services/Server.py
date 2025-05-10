@@ -6,6 +6,7 @@ from flask_cors import CORS
 from services.Storage import Storage, Record
 from flask_socketio import SocketIO, emit
 
+from services.vk import VkScheduler
 from services.yotube import YouTubeScheduler
 
 
@@ -13,15 +14,26 @@ class Endpoints:
     def __init__(self, storage: Storage, socketio, names: List[str], youtube: YouTubeScheduler):
         self.names = names
         self.youtube = youtube
+        self.vk = None
         self.socketio = socketio
         self.storage = storage
 
     def schedule_youtube(self):
         title = request.form["title"]
         start_at = request.form["startAt"]
-        thumbnail = request.files["thumbnail"]
+        trumbnails = request.files.getlist("thumbnail")
+        thumbnail = trumbnails[0] if len(trumbnails) > 0 else None
 
         self.youtube.schedule_live_stream(title, "", start_at, thumbnail)
+        return "ok"
+
+    def schedule_vk(self):
+        title = request.form["title"]
+        start_at = request.form["startAt"]
+        trumbnails = request.files.getlist("thumbnail")
+        thumbnail = trumbnails[0] if len(trumbnails) > 0 else None
+
+        self.vk.schedule_live_stream(title, "", start_at, thumbnail)
         return "ok"
 
     def get_formatted_keyframes(self):
@@ -87,8 +99,9 @@ def run_app(storage: Storage, youtube: YouTubeScheduler, names: List[str]):
     app.add_url_rule("/update-note", view_func=endpoints.update_note, methods=["POST"])
 
     app.add_url_rule("/schedule-youtube", view_func=endpoints.schedule_youtube, methods=["POST"])
+    app.add_url_rule("/schedule-vk", view_func=endpoints.schedule_vk, methods=["POST"])
 
-    socketio.run(app, "localhost", 8080, allow_unsafe_werkzeug=True)
+    socketio.run(app, "localhost", 8080, allow_unsafe_werkzeug=True, debug=False)
 
 
 if __name__ == '__main__':

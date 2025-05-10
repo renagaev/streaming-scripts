@@ -1,182 +1,209 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-    <meta charset="UTF-8"/>
-    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>OBS YouTube Scheduler</title>
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            background-color: #333;
-            color: #ffffff;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
+  <meta charset="UTF-8" />
+  <title>Планирование трансляций</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #232323;
+      font-family: sans-serif;
+      color: #ffffff;
+    }
 
-        .container {
-            background-color: #3a393a;
-            border: 1px solid #444;
-            border-radius: 5px;
-            padding: 15px;
-            width: 450px;
-            box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
-        }
+    #app {
+      padding: 10px;
+      max-width: 400px;
+      margin: 0 auto;
+    }
 
-        .header {
-            font-size: 1.1em;
-            font-weight: bold;
-            background-color: #2b2b2b;
-            padding: 8px 10px;
-            border: 1px solid #555;
-            margin-bottom: 10px;
-        }
+    .dock-header {
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 8px;
+      text-align: center;
+    }
 
-        .form-group {
-            margin-bottom: 12px;
-        }
+    .form-group {
+      margin-bottom: 10px;
+    }
 
-        label {
-            display: block;
-            margin-bottom: 4px;
-            font-size: 0.9em;
-        }
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+    }
 
-        input[type="text"], input[type="file"] {
-            width: 100%;
-            padding: 6px 8px;
-            font-size: 0.95em;
-            color: #ccc;
-            background-color: #232323;
-            border: 1px solid #555;
-            border-radius: 3px;
-        }
+    input[type="text"],
+    input[type="time"],
+    input[type="file"] {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 6px 8px;
+      background-color: #333;
+      border: 1px solid #555;
+      color: #fff;
+      border-radius: 3px;
+      outline: none;
+      font-size: 14px;
+    }
 
-        input[type="text"]:focus, input[type="file"]:focus {
-            outline: none;
-            border-color: #84162d;
-            box-shadow: 0 0 3px #84162d;
-        }
+    .buttons-container {
+      display: flex;
+      justify-content: space-between;
+      gap: 5px;
+    }
 
-        button {
-            background-color: #84162d;
-            color: #ffffff;
-            font-weight: bold;
-            padding: 8px;
-            border: none;
-            border-radius: 3px;
-            width: 100%;
-            cursor: pointer;
-            font-size: 1em;
-            text-transform: uppercase;
-        }
+    .btn {
+      flex: 1;
+      background-color: #3a3a3a;
+      border: 1px solid #555;
+      color: #fff;
+      padding: 8px;
+      text-align: center;
+      font-size: 14px;
+      border-radius: 3px;
+      cursor: pointer;
+    }
 
-        button:hover {
-            background-color: #a41c37;
-        }
+    .btn:hover {
+      background-color: #4b4b4b;
+    }
 
-        .divider {
-            border-top: 1px solid #555;
-            margin: 15px 0;
-        }
+    .btn:active {
+      background-color: #5a5a5a;
+    }
 
-        .file-path {
-            display: inline-block;
-            margin-top: 5px;
-            font-size: 0.8em;
-            color: #aaa;
-        }
+    .btn.success {
+      background-color: #2e7d32;
+    }
 
-        .error-message {
-            color: #ff5555;
-            margin-bottom: 10px;
-            font-size: 0.9em;
-            font-weight: bold;
-            text-align: center;
-        }
-    </style>
+    .status-message {
+      margin-top: 10px;
+      padding: 8px;
+      border-radius: 3px;
+      font-size: 14px;
+    }
+
+    .status-success {
+      background-color: #2e7d32;
+    }
+
+    .status-error {
+      background-color: #c62828;
+    }
+  </style>
 </head>
 <body>
 <div id="app">
-    <div class="container">
-        <div class="header">Настройки трансляции</div>
-        <div class="form-group">
-            <label for="title">Название трансляции</label>
-            <input type="text" id="title" v-model="title" placeholder="Введите название">
-        </div>
-        <div class="form-group">
-            <label for="start-time">Время старта (HH:mm)</label>
-            <input type="text" id="start-time" v-model="startTime" placeholder="11:00">
-        </div>
-        <div class="form-group">
-            <label for="thumbnail">Выберите файл изображения</label>
-            <input type="file" id="thumbnail" @change="handleFileUpload">
-            <span class="file-path" v-if="thumbnail">{{ thumbnail.name }}</span>
-        </div>
-        <div class="divider"></div>
-        <div class="error-message" v-if="errorMessage">{{ errorMessage }}</div>
-        <button @click="scheduleBroadcast">Запланировать</button>
-    </div>
+  <div class="dock-header">Планирование трансляции</div>
+
+  <div
+    class="status-message"
+    v-if="statusMessage"
+    :class="statusClass"
+  >
+    {{ statusMessage }}
+  </div>
+
+  <div class="form-group">
+    <label for="title">Название трансляции</label>
+    <input
+      id="title"
+      type="text"
+      v-model="title"
+    />
+  </div>
+
+  <div class="form-group">
+    <label for="startTime">Время начала</label>
+    <input
+      id="startTime"
+      type="time"
+      v-model="startTime"
+    />
+  </div>
+
+  <div class="form-group">
+    <label for="thumbnail">Обложка (thumbnail)</label>
+    <input id="thumbnail" type="file" @change="onThumbnailChange" />
+  </div>
+
+  <div class="buttons-container">
+    <div class="btn" :class="{'success': scheduled.youtube}" @click="schedule('youtube')">YouTube</div>
+    <div class="btn" :class="{'success': scheduled.vk}" @click="schedule('vk')">VK</div>
+    <div class="btn" :class="{'success': scheduled.rutube}" @click="schedule('rutube')">Rutube</div>
+  </div>
 </div>
+
 <script>
-    const { createApp } = Vue;
+new Vue({
+  el: '#app',
+  data() {
+    return {
+      title: '',
+      startTime: '11:00',
+      thumbnail: null,
+      statusMessage: '',
+      statusType: '',
+      scheduled: { youtube: false, vk: false, rutube: false }
+    };
+  },
+  created() {
+    this.title = `Служение ${this.formattedDate} | Тамбовская церковь | Прямая трансляция 🔴`;
+  },
+  computed: {
+    formattedDate() {
+      const date = new Date();
+      return date.toLocaleDateString('ru-RU');
+    },
+    statusClass() {
+      return this.statusType === 'success' ? 'status-success' : 'status-error';
+    }
+  },
+  methods: {
+    onThumbnailChange(event) {
+      this.thumbnail = event.target.files[0];
+    },
+    schedule(platform) {
+      const isoTime = this.getIsoTime();
+      const formData = new FormData();
+      formData.append('title', this.title);
+      formData.append('startAt', isoTime);
+      if (this.thumbnail) {
+        formData.append('thumbnail', this.thumbnail);
+      }
 
-    createApp({
-        data() {
-            return {
-                title: '',
-                startTime: '11:00',
-                thumbnail: null,
-                errorMessage: ''
-            };
-        },
-        methods: {
-            handleFileUpload(event) {
-                this.thumbnail = event.target.files[0];
-            },
-            scheduleBroadcast() {
-                this.errorMessage = '';
-
-                if (!this.title || !this.startTime || !this.thumbnail) {
-                    this.errorMessage = "Все поля обязательны для заполнения.";
-                    return;
-                }
-
-                const today = new Date();
-                const [hours, minutes] = this.startTime.split(":");
-                today.setHours(parseInt(hours));
-                today.setMinutes(parseInt(minutes));
-                today.setSeconds(0);
-
-                const isoTime = today.toISOString();
-
-                const formData = new FormData();
-                formData.append("title", this.title);
-                formData.append("startAt", isoTime);
-                formData.append("thumbnail", this.thumbnail);
-
-                fetch("http://localhost:8080/schedule-youtube", {
-                    method: "POST",
-                    body: formData
-                })
-                .then((response) => {
-                    if (response.ok) {
-                        this.errorMessage = "Трансляция успешно запланирована!";
-                    } else {
-                        this.errorMessage = "Ошибка при планировании трансляции.";
-                    }
-                })
-                .catch((error) => {
-                    console.error("Ошибка:", error);
-                    this.errorMessage = "Ошибка при подключении к серверу.";
-                });
-            },
-        },
-    }).mount("#app");
+      fetch(`http://localhost:8080/schedule-${platform}`, {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => {
+        if (!response.ok) throw new Error(`Ошибка при планировании на ${platform}`);
+        this.statusMessage = `Трансляция на ${platform.toUpperCase()} запланирована!`;
+        this.statusType = 'success';
+        this.scheduled[platform] = true;
+        setTimeout(() => this.statusMessage = '', 3000);
+      })
+      .catch(err => {
+        console.error(err);
+        this.statusMessage = `Не удалось запланировать трансляцию на ${platform.toUpperCase()}`;
+        this.statusType = 'error';
+        setTimeout(() => this.statusMessage = '', 3000);
+      });
+    },
+    getIsoTime() {
+      const today = new Date();
+      const [hours, minutes] = this.startTime.split(':');
+      today.setHours(parseInt(hours));
+      today.setMinutes(parseInt(minutes));
+      today.setSeconds(0);
+      return today.toISOString();
+    }
+  }
+});
 </script>
 </body>
 </html>

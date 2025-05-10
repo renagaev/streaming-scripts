@@ -1,3 +1,4 @@
+import json
 import threading
 import time
 from time import sleep
@@ -10,9 +11,9 @@ from datetime import datetime, timedelta
 
 
 class Obs:
-    def __init__(self):
-        self.ws = obsws("localhost", 4454, "secret" )
-        self.a = datetime.now()
+    def __init__(self, rtmp_config_path=None):
+        self.ws = obsws("localhost", 4454, "secret")
+        self.rtmp_config = rtmp_config_path
         self.ws.connect()
 
     def set_file(self, source, path):
@@ -109,6 +110,25 @@ class Obs:
         self._call(requests.SetSceneItemTransform("txt", x_scale=0.7, y_scale=0.7, rotation=0))
         self._call(requests.SetSceneItemProperties("txt", position_alignment=3))
 
+    def update_keys(self, vk_key, rutube_key):
+        with open(self.rtmp_config, "r", encoding="utf-8-sig") as f:
+            config = json.load(f)
+        targets = config["targets"]
+        vk = [i for i in targets if i["name"] == "vk"][0]
+        rutube = [i for i in targets if i["name"] == "rutube"][0]
+        vk["service-param"]["key"] = vk_key
+        rutube["service-param"]["key"] = rutube_key
+
+        with open(self.rtmp_config, "w", encoding="utf-8-sig") as f:
+            json.dump(config, f)
+
+        # переключаем профиль туда-сюда чтоб плагин подхватил изменение конфига
+        profiles = self._call(requests.GetProfileList()).datain
+        current_profile = profiles["currentProfileName"]
+        other_profile = [i for i in profiles["profiles"] if i != current_profile][0]
+        self._call(requests.SetCurrentProfile(profileName=other_profile))
+        self._call(requests.SetCurrentProfile(profileName=current_profile))
+
 
 class TriggerHotkey(requests.Baserequests):
     def __init__(self, hotkey_name):
@@ -135,7 +155,9 @@ if __name__ == '__main__':
         obs.ws.call(requests.GetSourceSettings("projector"))
 
 
-    obs = Obs()
+    obs = Obs(rtmp_config_path="C:\\Users\\admin\\AppData\\Roaming\\obs-studio\\basic\\profiles\\default\\obs-multi-rtmp.json")
+    obs.update_keys("vk 22", "rutube 22")
+    d = obs.ws.call(requests.GetOutputList())
     z = obs.ws.call(requests)
     z = obs.ws.call(requests.GetSourceSettings("sub_icon"))
     z = obs.ws.call(TriggerHotkey("donate-in"))

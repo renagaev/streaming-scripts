@@ -47,8 +47,11 @@ class Storage:
 
     def get_last_keyframes(self) -> Iterable[Record]:
         q = Query()
-        last = self.keyframes.all()[-1]
-        keyframes = self.keyframes.search(q.stream_start > (last["stream_start"] + timedelta(minutes=-1)))
+        keyframes = self.keyframes.all()
+        if keyframes:
+            last = keyframes[-1]
+            keyframes = self.keyframes.search(q.stream_start > (last["stream_start"] + timedelta(minutes=-1)))
+
         return [Record.from_document(i) for i in keyframes]
 
     def update_note(self, keyframe_id, note):
